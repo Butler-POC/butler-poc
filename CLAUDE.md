@@ -20,7 +20,6 @@ butler/
 │   ├── package.json
 │   ├── vite.config.ts          # @ 별칭 + /api 프록시 (shared 별칭 없음)
 │   ├── tsconfig.json
-│   ├── .env.local              # VITE_KAKAO_JS_KEY
 │   ├── public/
 │   │   ├── icons/              # 집사 아이콘 4종
 │   │   └── manifest.json       # PWA
@@ -56,10 +55,9 @@ butler/
 └── server/                     # ════ Express (localhost:3000) ════
     ├── package.json
     ├── tsconfig.json           # @ 별칭 (shared 별칭 없음)
-    ├── .env                    # 로컬 키 + DATABASE_URL="file:./dev.db"
+    ├── .env                    # 로컬 키 + MySQL DATABASE_URL
     ├── prisma/
-    │   ├── schema.prisma       # provider = "sqlite"
-    │   ├── dev.db              # 로컬 DB 파일 (gitignore)
+    │   ├── schema.prisma       # provider = "mysql"
     │   └── seed.ts
     ├── uploads/                # OCR 문서 로컬 저장 (gitignore)
     │   ├── registry/           # 등기부등본
@@ -68,7 +66,6 @@ butler/
     └── src/
         ├── index.ts            # listen + Socket.io
         ├── app.ts              # express 설정 (cors·json·static /uploads)
-        ├── config/env.ts
         ├── types/              # ★ 백엔드 도메인 타입 (독립 보유)
         │   ├── user.ts
         │   ├── building.ts
