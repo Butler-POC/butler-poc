@@ -22,7 +22,7 @@ butler/
 │   ├── tsconfig.json
 │   ├── .env.local              # VITE_KAKAO_JS_KEY
 │   ├── public/
-│   │   ├── icons/              # 집사 아이콘 4종...
+│   │   ├── icons/              # 집사 아이콘 4종
 │   │   └── manifest.json       # PWA
 │   └── src/
 │       ├── main.ts
