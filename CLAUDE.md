@@ -55,9 +55,9 @@ butler/
 └── server/                     # ════ Express (localhost:3000) ════
     ├── package.json
     ├── tsconfig.json           # @ 별칭 (shared 별칭 없음)
+    ├── .env                    # 로컬 키 + MySQL DATABASE_URL
     ├── prisma/
-    │   ├── schema.prisma       # provider = "sqlite"
-    │   ├── dev.db              # 로컬 DB 파일 (gitignore)
+    │   ├── schema.prisma       # provider = "mysql"
     │   └── seed.ts
     ├── uploads/                # OCR 문서 로컬 저장 (gitignore)
     │   ├── registry/           # 등기부등본
