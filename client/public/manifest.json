@@ -1,0 +1,27 @@
+{
+  "name": "Butler — 집의 매니저",
+  "short_name": "Butler",
+  "description": "임대인·임차인·중개업자를 위한 생애주기 자산 AI 관리 플랫폼",
+  "lang": "ko",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FBFAF6",
+  "theme_color": "#1E2331",
+  "icons": [
+    {
+      "src": "/icons/butler.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/butler-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

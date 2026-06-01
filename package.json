@@ -1,0 +1,16 @@
+{
+  "name": "butler-poc",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Butler POC — 임대인·임차인·중개사를 위한 부동산 서비스",
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,green \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "install:all": "npm install && npm --prefix server install && npm --prefix client install",
+    "build": "npm --prefix server run build && npm --prefix client run build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

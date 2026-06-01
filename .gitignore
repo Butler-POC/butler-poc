@@ -1,2 +1,21 @@
 # environmental variable
 **/.env
+
+# dependencies
+node_modules/
+
+# build output
+dist/
+*.tsbuildinfo
+
+# OCR 업로드 원본 (로컬 저장)
+server/uploads/
+
+# logs / temp
+*.log
+tmp-*.cjs
+
+# editor / OS
+.DS_Store
+.vscode/
+.idea/

@@ -1,0 +1,200 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// 사용자 유형 — 회원가입 시 결정, 이후 해당 역할 앱만 사용 가능
+enum UserType {
+  LANDLORD // 임대인 → Butler Landlord
+  TENANT // 임차인 → Butler Tenant
+  AGENT // 중개업자 → Butler Agent
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  userType     UserType
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  buildings Building[]
+  leases    Lease[] // T-01 임차 건물 (임차인 본인 계약)
+
+  @@map("users")
+}
+
+/// L-01 내 건물 — 등기부등본 정보 (OCR 또는 수동 입력)
+model Building {
+  id      String @id @default(cuid())
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  address        String // 소재지(도로명/지번)
+  buildingName   String? // 건물 명칭
+  structure      String? // 구조 (예: 철근콘크리트)
+  usage          String? // 용도 (예: 공동주택)
+  totalFloorArea Float? // 연면적(㎡)
+  floors         String? // 층수 (예: 지상5층/지하1층)
+  ownerName      String? // 등기상 소유자
+  ownerShare     String? // 지분
+  registryNo     String? // 등기 고유번호
+
+  source  String  @default("manual") // "manual" | "ocr"
+  rawText String? @db.Text // OCR 원문 (참고용)
+
+  mortgages Mortgage[] // 을구 — 현재 유효한 근저당권 (말소 제외)
+  ledger    BuildingLedger? // L-02 건축물대장 (건물당 1건)
+  tenants   Tenant[] // L-03 임차인 (임대차계약, 1:N)
+  vacancies Vacancy[] // L-07 공실 (1:N)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+  @@map("buildings")
+}
+
+/// L-02 내 건물 정보 — 건축물대장 (OCR 또는 수동 입력). Building 과 1:1.
+model BuildingLedger {
+  id         String   @id @default(cuid())
+  buildingId String   @unique
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  siteAddress           String? // 대지위치
+  lotNumber             String? // 지번
+  buildingName          String? // 건축물 명칭
+  landArea              Float? // 대지면적(㎡)
+  buildingArea          Float? // 건축면적(㎡)
+  totalFloorArea        Float? // 연면적(㎡)
+  buildingCoverageRatio Float? // 건폐율(%)
+  floorAreaRatio        Float? // 용적률(%)
+  mainStructure         String? // 주구조 (예: 철근콘크리트구조)
+  mainUsage             String? // 주용도 (예: 공동주택)
+  floorsAbove           Int? // 지상 층수
+  floorsBelow           Int? // 지하 층수
+  height                Float? // 높이(m)
+  households            String? // 세대/가구/호수 (표기 다양 → 문자열)
+  parking               String? // 주차 대수/면적 (표기 다양 → 문자열)
+  approvalDate          String? // 사용승인일
+
+  source  String  @default("manual") // "manual" | "ocr"
+  rawText String? @db.Text // OCR 원문 (참고용)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("building_ledgers")
+}
+
+/// L-03 임차인 — 임대차계약서 정보 (OCR 또는 수동 입력). Building 과 1:N.
+model Tenant {
+  id         String   @id @default(cuid())
+  buildingId String
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  name        String // 임차인 이름
+  contact     String? // 연락처
+  unit        String? // 동/호 (예: "101동 502호")
+  lessorName  String? // 임대인(계약상)
+
+  deposit        Float? // 보증금(원)
+  monthlyRent    Float? // 월세(원)
+  maintenanceFee Float? // 관리비(원)
+  paymentDay     Int? // 월세 납부일(매월 1~31) — L-04 연체 판정용
+  lastPaidMonth  String? // 마지막 월세 납부월(YYYY-MM) — L-04 연체 판정
+
+  leaseStart   String? // 계약 시작일
+  leaseEnd     String? // 계약 종료일
+  contractDate String? // 계약 체결일
+  specialTerms String? @db.Text // 특약사항 — T-02 하자 상담에서 활용
+
+  source  String  @default("manual") // "manual" | "ocr"
+  rawText String? @db.Text // OCR 원문 (참고용)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([buildingId])
+  @@map("tenants")
+}
+
+/// L-07 공실 — 임대인이 등록하는 임대 매물(빈 집). Building 과 1:N. A-01 공실 조회의 원천.
+model Vacancy {
+  id         String   @id @default(cuid())
+  buildingId String
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  unit           String? // 동/호
+  dealType       String  @default("MONTHLY") // "MONTHLY"(월세) | "JEONSE"(전세)
+  deposit        Float? // 보증금(원)
+  monthlyRent    Float? // 월세(원) — 전세면 null
+  maintenanceFee Float? // 관리비(원)
+  areaM2         Float? // 전용면적(㎡)
+  floor          String? // 층 (표기 다양 → 문자열)
+  roomType       String? // 구조 (예: 원룸/투룸)
+  availableFrom  String? // 입주 가능일
+  description    String? @db.Text // 상세 설명/홍보
+  status         String  @default("OPEN") // "OPEN"(모집중) | "CLOSED"(마감)
+  contact        String? // 문의 연락처
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([buildingId])
+  @@index([status])
+  @@map("vacancies")
+}
+
+/// 근저당권 (등기사항증명서 을구) — 말소되지 않은(유효한) 항목만 저장
+model Mortgage {
+  id         String   @id @default(cuid())
+  buildingId String
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  maxClaimAmount Float? // 채권최고액(원)
+  creditor       String? // 근저당권자 (예: ○○은행)
+  debtor         String? // 채무자
+  establishedOn  String? // 설정/접수일 (표기 다양 → 문자열)
+
+  createdAt DateTime @default(now())
+
+  @@index([buildingId])
+  @@map("mortgages")
+}
+
+/// T-01 임차 건물 — 임차인이 본인 임대차계약을 등록 (OCR 또는 수동). User(임차인) 와 1:N.
+model Lease {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  address      String // 임차 건물(목적물) 주소
+  buildingName String? // 건물 명칭
+  unit         String? // 동/호
+  lessorName   String? // 임대인(소유자)
+
+  deposit        Float? // 보증금(원)
+  monthlyRent    Float? // 월세(원)
+  maintenanceFee Float? // 관리비(원)
+  paymentDay     Int? // 월세 납부일(1~31)
+
+  leaseStart   String? // 계약 시작일
+  leaseEnd     String? // 계약 종료일
+  contractDate String? // 계약 체결일
+  specialTerms String? @db.Text // 특약사항 — T-02 하자 상담에서 활용
+
+  source  String  @default("manual") // "manual" | "ocr"
+  rawText String? @db.Text // OCR 원문 (참고용)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("leases")
+}

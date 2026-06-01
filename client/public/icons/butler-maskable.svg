@@ -1,0 +1,7 @@
+<!-- Created: 2026-05-30 10:26 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Butler">
+  <rect width="512" height="512" fill="#1E2331"/>
+  <text x="248" y="266" text-anchor="middle" dominant-baseline="central"
+        font-family="Georgia, 'Times New Roman', serif" font-size="232" font-weight="400" fill="#FBFAF6">B</text>
+  <circle cx="332" cy="190" r="22" fill="#C79A4A"/>
+</svg>

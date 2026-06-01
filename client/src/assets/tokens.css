@@ -1,0 +1,102 @@
+/* Created: 2026-05-30 10:11 */
+/* ════════════════════════════════════════════════════════════
+   BUTLER — Design Tokens  (Design.md 발췌: Paper / Ink / Brass)
+   ════════════════════════════════════════════════════════════ */
+
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@latest/dist/web/variable/pretendardvariable.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* — Surface — */
+  --paper: #fbfaf6;
+  --paper-sunk: #f4f2ed;
+  --paper-raised: #ffffff;
+
+  /* — Ink — */
+  --ink: #1e2331;
+  --ink-2: #3a4151;
+  --ink-3: #5e6675;
+  --ink-4: #8c939f;
+
+  /* — Slate — */
+  --slate-100: #eceef1;
+  --slate-200: #dee1e7;
+  --slate-300: #cacfd8;
+
+  /* — Brass (유일한 포인트색) — */
+  --brass: #c79a4a;
+  --brass-soft: #eee4cc;
+  --brass-deep: #9a7536;
+  --brass-ink: #50402a;
+
+  /* — Semantic — */
+  --sage: #4e8a6f;
+  --sage-soft: #dfefe6;
+  --amber: #ce9a3b;
+  --amber-soft: #f3e9cf;
+  --crimson: #b5443c;
+  --crimson-soft: #f6e3df;
+  --indigo: #3a5289;
+  --indigo-soft: #e3e7f2;
+
+  /* — Type — */
+  --font-sans: 'Pretendard Variable', -apple-system, 'Apple SD Gothic Neo',
+    'Noto Sans KR', sans-serif;
+  --font-serif: 'Instrument Serif', 'Iowan Old Style', 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+
+  /* — Radii — */
+  --r-chip: 4px;
+  --r-input: 8px;
+  --r-card: 12px;
+  --r-sheet: 16px;
+  --r-pill: 999px;
+
+  /* — Shadow (잉크 틴트) — */
+  --shadow-1: 0 1px 2px oklch(0.22 0.025 248 / 0.06), 0 1px 1px oklch(0.22 0.025 248 / 0.04);
+  --shadow-2: 0 4px 12px oklch(0.22 0.025 248 / 0.08), 0 1px 2px oklch(0.22 0.025 248 / 0.04);
+  --shadow-3: 0 24px 48px oklch(0.22 0.025 248 / 0.16), 0 4px 12px oklch(0.22 0.025 248 / 0.08);
+
+  /* — Motion — */
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --d-base: 200ms;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'ss05', 'case', 'kern';
+}
+
+::selection {
+  background: var(--brass-soft);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  letter-spacing: -0.012em;
+  line-height: 1.28;
+}
+
+.numeric,
+.mono {
+  font-variant-numeric: tabular-nums;
+}
