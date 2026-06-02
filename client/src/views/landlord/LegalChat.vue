@@ -4,7 +4,7 @@
 <!-- 가정(기반): @/api/client (axios, baseURL '/api') -->
 <script setup lang="ts">
 import { ref, nextTick } from 'vue';
-import http from '@/api/client';
+import { api as http } from '@/api/client';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 

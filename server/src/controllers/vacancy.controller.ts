@@ -5,7 +5,7 @@
 //   - '../lib/prisma' : PrismaClient 인스턴스 default export. prisma.building(Building 모델) 사용.
 //   - Building 모델 : { id, address, ownerId, owner: User } (scalar FK buildingId 로 Vacancy 와 연결)
 import type { Request, Response, NextFunction } from 'express';
-import prisma from '../lib/prisma';
+import { prisma } from '../lib/prisma';
 import type { VacancyWithOwner } from '../types';
 
 // GET /api/vacancies — A-01 공실 조회(임대인 정보 동반) + 필터

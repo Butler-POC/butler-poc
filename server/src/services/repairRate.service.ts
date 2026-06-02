@@ -1,8 +1,8 @@
 // 수선비율 결정 서비스 — T-02 상담 판정 / T-03 제보 시 임대인 연락 필요 여부 판정
 //
 // 가정한 기반 인터페이스:
-//   - '../services/llm.service' 의 chat({ system, messages }) => Promise<string> (단일 LLM)
-import { chat } from './llm.service';
+//   - '../services/chat.service' 의 chat({ system, messages }) => Promise<string> (단일 LLM)
+import { chat } from './chat.service';
 import {
   buildRepairAssessmentSystemPrompt,
   type RepairContext,

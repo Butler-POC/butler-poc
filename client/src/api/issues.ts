@@ -1,6 +1,6 @@
 // 하자 API 래퍼 (T-02 상담 / T-03 제보·조회)
-// 가정: './client' axios 인스턴스(baseURL '/api') default export
-import http from './client';
+// './client' axios 인스턴스(baseURL '/api') 의 named export api 사용
+import { api as http } from './client';
 import type { Issue, IssueReportInput, RepairRateAssessment } from '@/types';
 
 // T-03 — 하자 제보

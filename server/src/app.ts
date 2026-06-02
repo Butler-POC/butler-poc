@@ -5,6 +5,10 @@ import ocrRouter from './routes/ocr';
 import authRouter from './routes/auth';
 import buildingsRouter from './routes/buildings';
 import leasesRouter from './routes/leases';
+import chatRouter from './routes/chat';
+import vendorsRouter from './routes/vendors';
+import issuesRouter from './routes/issues';
+import vacanciesRouter from './routes/vacancies';
 import { notFound, errorHandler } from './middleware/error';
 import { UPLOAD_ROOT } from './lib/paths';
 
@@ -32,6 +36,12 @@ export function createApp() {
 
   // T-01 임차 건물 등록 (임차인 전용)
   app.use('/api/leases', leasesRouter);
+
+  // ── jh 슬라이스(머지 시 장착) ──
+  app.use('/api/chat', chatRouter); // C-02 챗봇 / L-06 법률 / T-02 하자 상담
+  app.use('/api/vendors', vendorsRouter); // L-05 수선 업체 조회
+  app.use('/api/issues', issuesRouter); // T-03 하자 제보·수신함
+  app.use('/api/vacancies', vacanciesRouter); // A-01 공실 조회(횡단)
 
   app.use(notFound);
   app.use(errorHandler);

@@ -2,13 +2,14 @@
 //   general → 일반 챗봇 / legal → L-06 법률 상담 / repair → T-02 하자 상담
 //
 // 실제 의존(C-02 구현됨):
-//   - '../services/llm.service' 의 chat({ system, messages }) => Promise<string> (단일 LLM/Claude)
+//   - '../services/chat.service' 의 chat({ system, messages }) => Promise<string> (단일 LLM/Claude)
 // 가정한 기반 인터페이스(팀원 담당):
 //   - '../lib/prisma' default export. prisma.building(ownerId), building.tenants / prisma.tenant 관계.
 //   - auth 미들웨어가 req.user = { id, name? } 주입.
 import type { Request, Response, NextFunction } from 'express';
-import prisma from '../lib/prisma';
-import { chat } from '../services/llm.service';
+import { prisma } from '../lib/prisma';
+import type { AuthedRequest } from '../middleware/auth';
+import { chat } from '../services/chat.service';
 import { BASE_BUTLER_SYSTEM } from '../prompts/chat.prompt';
 import { buildLegalSystemPrompt, LEGAL_DISCLAIMER, type LegalContext } from '../prompts/legal.prompt';
 import {
@@ -47,15 +48,15 @@ async function buildOwnerLegalContext(ownerId: string, ownerName?: string): Prom
 // POST /api/chat (mode: 'legal') — L-06 간단 법률 상담
 export async function legalChat(req: Request, res: Response, next: NextFunction) {
   try {
-    const user = (req as { user?: { id: string; name?: string } }).user;
-    if (!user?.id) return res.status(401).json({ message: '로그인이 필요합니다.' });
+    const userId = (req as AuthedRequest).userId;
+    if (!userId) return res.status(401).json({ message: '로그인이 필요합니다.' });
 
     const { message, history } = req.body as { message?: string; history?: ChatMessage[] };
     if (!message || !message.trim()) {
       return res.status(400).json({ message: '질문 내용을 입력해 주세요.' });
     }
 
-    const context = await buildOwnerLegalContext(user.id, user.name);
+    const context = await buildOwnerLegalContext(userId);
     const system = buildLegalSystemPrompt(context);
 
     const messages: ChatMessage[] = [
@@ -76,15 +77,15 @@ async function buildTenantRepairContext(
   userId: string,
   extra: { category?: string; description?: string },
 ): Promise<RepairContext> {
-  // 기반 가정: Tenant(userId) → building 관계, 특약/호실 필드
-  const tenancy = await prisma.tenant.findFirst({
+  // 임차인 본인 계약은 jg의 Lease 모델(userId 1:N, T-01). 최신 계약을 맥락으로 사용.
+  const lease = await prisma.lease.findFirst({
     where: { userId },
-    include: { building: true },
+    orderBy: { createdAt: 'desc' },
   });
   return {
-    buildingAddress: tenancy?.building?.address,
-    unit: tenancy?.unit,
-    specialTerms: tenancy?.specialTerms ?? tenancy?.specialTerm ?? undefined,
+    buildingAddress: lease?.address ?? undefined,
+    unit: lease?.unit ?? undefined,
+    specialTerms: lease?.specialTerms ?? undefined,
     category: extra.category,
     description: extra.description,
   };
@@ -93,8 +94,8 @@ async function buildTenantRepairContext(
 // POST /api/chat (mode: 'repair') — T-02 하자 상담 (상담 응답 + 수선비율 판정 동반)
 export async function repairChat(req: Request, res: Response, next: NextFunction) {
   try {
-    const user = (req as { user?: { id: string } }).user;
-    if (!user?.id) return res.status(401).json({ message: '로그인이 필요합니다.' });
+    const userId = (req as AuthedRequest).userId;
+    if (!userId) return res.status(401).json({ message: '로그인이 필요합니다.' });
 
     const { message, history, category, description } = req.body as {
       message?: string;
@@ -106,7 +107,7 @@ export async function repairChat(req: Request, res: Response, next: NextFunction
       return res.status(400).json({ message: '상담 내용을 입력해 주세요.' });
     }
 
-    const context = await buildTenantRepairContext(user.id, {
+    const context = await buildTenantRepairContext(userId, {
       category,
       description: description ?? message,
     });

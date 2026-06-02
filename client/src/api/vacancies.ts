@@ -1,8 +1,19 @@
 // Created: 2026-05-31
 import { api } from '@/api/client';
+import type { VacancyWithOwner } from '@/types';
 
 export type DealType = 'MONTHLY' | 'JEONSE';
 export type VacancyStatus = 'OPEN' | 'CLOSED';
+
+// A-01 — 공실 조회(임대인 정보 동반, 전체 건물 횡단) + 필터. (jh 슬라이스, 머지 시 추가)
+export function fetchVacancies(params?: { status?: string; buildingId?: string }): Promise<VacancyWithOwner[]> {
+  return api.get<VacancyWithOwner[]>('/vacancies', { params }).then((r) => r.data);
+}
+
+// A-02 — 채팅방 키 규약: 공실 + 에이전트 쌍 기준
+export function vacancyRoomId(vacancyId: string, agentId: string): string {
+  return `vacancy:${vacancyId}:agent:${agentId}`;
+}
 
 export interface Vacancy {
   id: string;

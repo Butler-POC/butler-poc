@@ -5,7 +5,8 @@
 //   - '../sockets/chat.socket' 의 emitToUser(userId, event, payload) — 소켓 실시간 전달
 //   - auth 미들웨어가 req.user = { id } 주입
 import type { Request, Response, NextFunction } from 'express';
-import prisma from '../lib/prisma';
+import { prisma } from '../lib/prisma';
+import type { AuthedRequest } from '../middleware/auth';
 import { emitToUser } from '../sockets/chat.socket';
 import { decideNeedsLandlord } from '../services/repairRate.service';
 import type { IssueReportInput } from '../types';
@@ -13,8 +14,8 @@ import type { IssueReportInput } from '../types';
 // POST /api/issues — T-03 하자 제보
 export async function createIssue(req: Request, res: Response, next: NextFunction) {
   try {
-    const user = (req as { user?: { id: string } }).user;
-    if (!user?.id) return res.status(401).json({ message: '로그인이 필요합니다.' });
+    const userId = (req as AuthedRequest).userId;
+    if (!userId) return res.status(401).json({ message: '로그인이 필요합니다.' });
 
     const body = req.body as IssueReportInput;
     const required: (keyof IssueReportInput)[] = ['buildingId', 'category', 'description', 'proposedRepairRate'];
@@ -31,7 +32,7 @@ export async function createIssue(req: Request, res: Response, next: NextFunctio
     const issue = await prisma.issue.create({
       data: {
         buildingId: body.buildingId,
-        tenantId: body.tenantId ?? user.id,
+        tenantId: body.tenantId ?? userId,
         category: body.category,
         description: body.description,
         photos: body.photos ?? undefined,
@@ -69,20 +70,20 @@ export async function createIssue(req: Request, res: Response, next: NextFunctio
 // GET /api/issues (임대인) — 내 건물에 접수된 하자 (수신함)
 export async function listIssues(req: Request, res: Response, next: NextFunction) {
   try {
-    const user = (req as { user?: { id: string } }).user;
-    if (!user?.id) return res.status(401).json({ message: '로그인이 필요합니다.' });
+    const userId = (req as AuthedRequest).userId;
+    if (!userId) return res.status(401).json({ message: '로그인이 필요합니다.' });
 
     const { mine } = req.query;
     if (mine === 'true') {
       const issues = await prisma.issue.findMany({
-        where: { tenantId: user.id },
+        where: { tenantId: userId },
         orderBy: { createdAt: 'desc' },
       });
       return res.json(issues);
     }
 
     // 임대인 수신함: 본인 소유 건물의 하자
-    const myBuildings = await prisma.building.findMany({ where: { ownerId: user.id }, select: { id: true } });
+    const myBuildings = await prisma.building.findMany({ where: { ownerId: userId }, select: { id: true } });
     const issues = await prisma.issue.findMany({
       where: { buildingId: { in: myBuildings.map((b: { id: string }) => b.id) } },
       orderBy: [{ aiNeedsLandlord: 'desc' }, { createdAt: 'desc' }], // 연락 필요 건 상단

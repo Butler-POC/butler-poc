@@ -11,10 +11,10 @@ const vacancies = useVacanciesStore();
 const router = useRouter();
 const onlyAvailable = ref(true);
 
-const won = (n: number) => '₩' + n.toLocaleString('ko-KR');
+const won = (n: number | null) => (n == null ? '미정' : '₩' + n.toLocaleString('ko-KR'));
 
 const items = computed(() =>
-  onlyAvailable.value ? vacancies.listing.filter((v) => v.status === 'available') : vacancies.listing,
+  onlyAvailable.value ? vacancies.listing.filter((v) => v.status === 'OPEN') : vacancies.listing,
 );
 
 function openChat(vacancyId: string) {
@@ -50,13 +50,13 @@ onMounted(() => vacancies.loadListing());
         <BaseCard>
           <article class="prop">
             <div class="prop__head">
-              <span class="chip" :class="v.status === 'available' ? 'chip--ok' : 'chip--muted'">
-                {{ v.status === 'available' ? '모집중' : '마감' }}
+              <span class="chip" :class="v.status === 'OPEN' ? 'chip--ok' : 'chip--muted'">
+                {{ v.status === 'OPEN' ? '모집중' : '마감' }}
               </span>
-              <strong class="prop__unit">{{ v.unit }}</strong>
+              <strong class="prop__unit">{{ v.unit ?? '호실 미정' }}</strong>
             </div>
             <p class="prop__addr">{{ v.buildingAddress ?? '주소 정보 없음' }}</p>
-            <p class="prop__meta">전용 {{ v.areaM2 }}㎡</p>
+            <p v-if="v.areaM2 != null" class="prop__meta">전용 {{ v.areaM2 }}㎡</p>
             <p class="prop__money num">보증금 {{ won(v.deposit) }} · 월세 {{ won(v.monthlyRent) }}</p>
             <p v-if="v.description" class="prop__desc">{{ v.description }}</p>
             <div class="prop__owner">
