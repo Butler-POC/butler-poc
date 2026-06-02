@@ -57,7 +57,7 @@ function pick(c: VendorCategory) {
 const fmtDist = (m?: number) => (typeof m === 'number' ? (m >= 1000 ? `${(m / 1000).toFixed(1)}km` : `${m}m`) : '');
 
 onMounted(async () => {
-  await buildings.load?.();
+  await buildings.fetch();
   const first = buildings.items?.[0];
   if (first) buildingId.value = first.id;
 });

@@ -44,7 +44,8 @@ async function submit() {
 }
 
 onMounted(() => {
-  buildings.load?.();
+  // TODO(통합): 임차인은 buildings(임대인용)가 아니라 Lease(/api/leases)에서 건물 선택지를 받아야 함.
+  buildings.fetch();
   // 임차 건물이 하나면 자동 선택
   const first = buildings.items?.[0];
   if (first && !form.buildingId) form.buildingId = first.id;
