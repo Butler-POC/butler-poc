@@ -1,11 +1,11 @@
 <!-- T-03 하자 제보 (테넌트 → 오너) -->
 <!-- 하자 내용 + 제안 수선비율을 임대인에게 제보. T-02 상담 결과를 query 로 prefill 받는다. -->
-<!-- 가정(기반): useBuildingsStore(임차인의 임차 건물 목록) -->
+<!-- 임차인은 본인 임대차계약(Lease, /api/leases)에서 건물 선택지를 받는다(useLeasesStore). -->
 <script setup lang="ts">
 import { onMounted, reactive, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useIssuesStore } from '@/stores/issues';
-import { useBuildingsStore } from '@/stores/buildings';
+import { useLeasesStore } from '@/stores/leases';
 import type { IssueCategory, IssueReportInput } from '@/types';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import BaseCard from '@/components/ui/BaseCard.vue';
@@ -24,7 +24,7 @@ const CATEGORIES: { value: IssueCategory; label: string }[] = [
 const route = useRoute();
 const router = useRouter();
 const issues = useIssuesStore();
-const buildings = useBuildingsStore();
+const leases = useLeasesStore();
 
 const form = reactive<IssueReportInput>({
   buildingId: '',
@@ -44,11 +44,10 @@ async function submit() {
   if (created) router.push({ name: 'tenant-defect-history' });
 }
 
-onMounted(() => {
-  // TODO(통합): 임차인은 buildings(임대인용)가 아니라 Lease(/api/leases)에서 건물 선택지를 받아야 함.
-  buildings.fetch();
-  // 임차 건물이 하나면 자동 선택
-  const first = buildings.items?.[0];
+onMounted(async () => {
+  await leases.fetch();
+  // 임차 계약이 하나면 자동 선택
+  const first = leases.items?.[0];
   if (first && !form.buildingId) form.buildingId = first.id;
 });
 </script>
@@ -67,7 +66,9 @@ onMounted(() => {
           <span class="label">건물</span>
           <select v-model="form.buildingId" class="control">
             <option value="" disabled>임차 건물을 선택하세요</option>
-            <option v-for="b in buildings.items ?? []" :key="b.id" :value="b.id">{{ b.address }}</option>
+            <option v-for="l in leases.items ?? []" :key="l.id" :value="l.id">
+              {{ l.address }}{{ l.unit ? ` ${l.unit}` : '' }}
+            </option>
           </select>
         </label>
 
