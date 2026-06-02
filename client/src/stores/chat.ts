@@ -41,7 +41,10 @@ export const useChatStore = defineStore('chat', () => {
     socket = io(socketOrigin(), { auth: { token }, autoConnect: true });
     socket.on('connect', () => (connected.value = true));
     socket.on('disconnect', () => (connected.value = false));
-    socket.on('chat:message', (m: RoomMessage) => messages.value.push(m));
+    socket.on('chat:message', (m: RoomMessage) => {
+      // 룸·개인룸 양쪽으로 받을 수 있어 id 기준 중복 제거
+      if (!messages.value.some((x) => x.id === m.id)) messages.value.push(m);
+    });
     return socket;
   }
 

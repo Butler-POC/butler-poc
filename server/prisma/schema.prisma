@@ -219,8 +219,10 @@ enum IssueCategory {
 
 model Issue {
   id                 String        @id @default(cuid())
-  buildingId         String // → Building (scalar FK)
-  tenantId           String // → Tenant/계약 (scalar FK)
+  buildingId         String? // → Building (주소 매칭으로 해결. 미연결이면 null → 임대인 수신함 비노출)
+  leaseId            String? // → Lease (제보한 임차인 계약 출처)
+  buildingAddress    String? // 제보 대상 주소 (표시·매칭 참고용)
+  tenantId           String // → 제보 임차인(User) id
   category           IssueCategory
   description        String        @db.Text
   photos             Json? // 업로드 파일 경로 배열 (선택). MySQL JSON 컬럼.

@@ -15,8 +15,10 @@ export type IssueCategory =
 
 export interface Issue {
   id: string;
-  buildingId: string; // → Building (기반, 가정)
-  tenantId: string; // → Tenant/계약 (기반, 가정)
+  buildingId: string | null; // → Building (주소 매칭으로 해결. 미연결이면 null)
+  leaseId?: string | null; // → Lease (제보 임차인 계약 출처)
+  buildingAddress?: string | null; // 제보 대상 주소 (표시·참고)
+  tenantId: string; // → 제보 임차인(User) id
   category: IssueCategory;
   description: string;
   photos?: string[]; // 업로드 파일 경로 (선택)
@@ -26,11 +28,16 @@ export interface Issue {
   createdAt: string; // ISO 8601
 }
 
-// T-03 제보 입력 (서버 생성 필드·AI 판정 필드 제외)
-export type IssueReportInput = Pick<
-  Issue,
-  'buildingId' | 'tenantId' | 'category' | 'description' | 'proposedRepairRate'
-> & { photos?: string[] };
+// T-03 제보 입력 — 임차인은 본인 계약(leaseId)을 보내고, 서버가 주소로 Building 을 연결한다.
+// tenantId 는 서버에서 req.userId 로 보정. buildingId 직접 지정도 허용(선택).
+export interface IssueReportInput {
+  leaseId?: string;
+  buildingId?: string;
+  category: IssueCategory;
+  description: string;
+  proposedRepairRate: number;
+  photos?: string[];
+}
 
 // repairRate.service 의 수선비율 판정 결과 (T-02 상담 / T-03 제보)
 export interface RepairRateAssessment {

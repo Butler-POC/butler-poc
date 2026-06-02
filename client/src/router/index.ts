@@ -25,7 +25,8 @@ import DefectChat from '@/views/tenant/DefectChat.vue'; // T-02
 import DefectReport from '@/views/tenant/DefectReport.vue'; // T-03
 import DefectHistory from '@/views/tenant/DefectHistory.vue'; // T-03 이력
 import VacancyList from '@/views/agent/VacancyList.vue'; // A-01
-import OwnerChat from '@/views/agent/OwnerChat.vue'; // A-02 에이전트측
+import OwnerChat from '@/views/agent/OwnerChat.vue'; // A-02 단일 대화(에이전트측)
+import AgentChats from '@/views/agent/AgentChats.vue'; // A-02 임대인 대화 목록
 
 const router = createRouter({
   history: createWebHistory(),
@@ -57,6 +58,7 @@ const router = createRouter({
     // A-01 공실 조회 / A-02 건물주 연결(에이전트측)
     { path: '/app/agent/vacancies', name: 'agent-vacancies', component: VacancyList, meta: { requiresAuth: true, role: 'AGENT' } },
     { path: '/app/agent/vacancies/:vacancyId/chat', name: 'agent-owner-chat', component: OwnerChat, meta: { requiresAuth: true, role: 'AGENT' } },
+    { path: '/app/agent/chats', name: 'agent-chats', component: AgentChats, meta: { requiresAuth: true, role: 'AGENT' } },
 
     // 공통 기능 (로그인한 모든 역할)
     { path: '/scan', name: 'scan', component: ScanView, meta: { requiresAuth: true } },

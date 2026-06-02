@@ -11,28 +11,72 @@ import { emitToUser } from '../sockets/chat.socket';
 import { decideNeedsLandlord } from '../services/repairRate.service';
 import type { IssueReportInput } from '../types';
 
+// 주소 정규화(공백·대소문자 제거) — 임차인 Lease 주소 ↔ 임대인 Building 주소 매칭 키
+const normAddr = (s?: string | null) => (s ?? '').replace(/\s+/g, '').toLowerCase();
+
+// 임차인 Lease 의 주소로 임대인 Building 을 찾아 연결 (POC: 주소 정규화 일치)
+async function resolveBuilding(
+  address: string | null,
+): Promise<{ id: string; ownerId: string } | null> {
+  const key = normAddr(address);
+  if (!key) return null;
+  const buildings = await prisma.building.findMany({ select: { id: true, address: true, ownerId: true } });
+  const hit = buildings.find((b) => normAddr(b.address) === key);
+  return hit ? { id: hit.id, ownerId: hit.ownerId } : null;
+}
+
 // POST /api/issues — T-03 하자 제보
+//   임차인은 본인 계약(leaseId)을 보내고, 서버가 그 주소로 임대인 Building 을 연결한다.
 export async function createIssue(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = (req as AuthedRequest).userId;
     if (!userId) return res.status(401).json({ message: '로그인이 필요합니다.' });
 
     const body = req.body as IssueReportInput;
-    const required: (keyof IssueReportInput)[] = ['buildingId', 'category', 'description', 'proposedRepairRate'];
+    const required: (keyof IssueReportInput)[] = ['category', 'description', 'proposedRepairRate'];
     for (const key of required) {
-      if (body[key] === undefined || body[key] === null || body[key] === '') {
+      if (body[key] === undefined || body[key] === null || (body[key] as unknown) === '') {
         return res.status(400).json({ message: `필수 항목이 누락되었습니다: ${key}` });
       }
     }
+    if (!body.leaseId && !body.buildingId) {
+      return res.status(400).json({ message: '제보할 임차 건물(leaseId)이 필요합니다.' });
+    }
 
     const proposedRepairRate = Math.min(100, Math.max(0, Math.round(Number(body.proposedRepairRate))));
-    // 수선비율 결정 AI 판정: 분담 비율 기반 임대인 연락 필요 여부
     const aiNeedsLandlord = decideNeedsLandlord(proposedRepairRate);
+
+    // 제보 대상 주소 확보: leaseId(임차인 본인 계약) 우선
+    let leaseAddress: string | null = null;
+    if (body.leaseId) {
+      const lease = await prisma.lease.findFirst({
+        where: { id: body.leaseId, userId }, // 본인 계약만 허용
+        select: { address: true },
+      });
+      if (!lease) return res.status(404).json({ message: '임차 계약을 찾을 수 없습니다.' });
+      leaseAddress = lease.address;
+    }
+
+    // 주소 매칭으로 임대인 Building 연결 (실패 시 buildingId=null → 임대인 수신함 비노출)
+    let buildingId: string | null = body.buildingId ?? null;
+    let ownerId: string | null = null;
+    if (!buildingId) {
+      const matched = await resolveBuilding(leaseAddress);
+      if (matched) {
+        buildingId = matched.id;
+        ownerId = matched.ownerId;
+      }
+    } else {
+      const b = await prisma.building.findUnique({ where: { id: buildingId }, select: { ownerId: true } });
+      ownerId = b?.ownerId ?? null;
+    }
 
     const issue = await prisma.issue.create({
       data: {
-        buildingId: body.buildingId,
-        tenantId: body.tenantId ?? userId,
+        buildingId,
+        leaseId: body.leaseId ?? null,
+        buildingAddress: leaseAddress,
+        tenantId: userId,
         category: body.category,
         description: body.description,
         photos: body.photos ?? undefined,
@@ -42,25 +86,21 @@ export async function createIssue(req: Request, res: Response, next: NextFunctio
       },
     });
 
-    // 임대인 연락 필요 시 → 소유 임대인에게 실시간 알림(채팅 플럼빙 재사용)
-    if (aiNeedsLandlord) {
-      const building = await prisma.building.findUnique({
-        where: { id: body.buildingId },
-        select: { ownerId: true },
+    // 임대인 연결 + 연락 필요 시 → 소유 임대인에게 실시간 알림
+    if (buildingId && ownerId && aiNeedsLandlord) {
+      emitToUser(ownerId, 'issue:reported', {
+        issueId: issue.id,
+        buildingId: issue.buildingId,
+        buildingAddress: issue.buildingAddress,
+        category: issue.category,
+        proposedRepairRate: issue.proposedRepairRate,
+        description: issue.description,
+        createdAt: issue.createdAt,
       });
-      if (building?.ownerId) {
-        emitToUser(building.ownerId, 'issue:reported', {
-          issueId: issue.id,
-          buildingId: issue.buildingId,
-          category: issue.category,
-          proposedRepairRate: issue.proposedRepairRate,
-          description: issue.description,
-          createdAt: issue.createdAt,
-        });
-      }
     }
 
-    res.status(201).json(issue);
+    // linked: 임대인 Building 연결 여부 — 클라가 안내에 사용
+    res.status(201).json({ ...issue, linked: Boolean(buildingId) });
   } catch (err) {
     next(err);
   }

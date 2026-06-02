@@ -40,7 +40,7 @@ const ROLE_FEATURES: Record<UserType, Feature[]> = {
   ],
   AGENT: [
     { code: 'A-01', name: '공실 조회', to: '/app/agent/vacancies' },
-    { code: 'A-02', name: '건물주 연결', to: '/app/agent/vacancies' },
+    { code: 'A-02', name: '건물주 연결', to: '/app/agent/chats' },
   ],
 };
 

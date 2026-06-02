@@ -62,6 +62,7 @@ onBeforeUnmount(() => chat.off?.('issue:reported', onIncoming));
                 {{ it.aiNeedsLandlord ? '연락 필요' : '확인 요망' }}
               </span>
             </div>
+            <p v-if="it.buildingAddress" class="issue__addr">{{ it.buildingAddress }}</p>
             <p class="issue__desc">{{ it.description }}</p>
             <div class="issue__foot">
               <span class="issue__rate num">제안 수선비율 {{ it.proposedRepairRate }}%</span>
@@ -152,6 +153,11 @@ onBeforeUnmount(() => chat.off?.('issue:reported', onIncoming));
   height: 6px;
   border-radius: 999px;
   background: currentColor;
+}
+.issue__addr {
+  font-size: 12px;
+  color: var(--ink-3, #5e6675);
+  margin: 6px 0 0;
 }
 .issue__desc {
   font-size: 14px;

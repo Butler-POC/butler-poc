@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { APP_META } from '@/types/user';
+import ButlerLogo from '@/components/layout/ButlerLogo.vue';
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -19,7 +20,8 @@ function logout() {
 
 <template>
   <header class="topbar">
-    <span class="wordmark">Butler<i class="dot" /></span>
+    <!-- 로그인 역할에 따라 아이콘 교체(상단바는 paper 배경이라 tile 불필요) -->
+    <ButlerLogo :size="30" wordmark />
     <span v-if="roleLabel" class="role-chip">{{ roleLabel }}</span>
     <span v-else class="tagline">집의 매니저</span>
     <button v-if="auth.isAuthed" class="logout" type="button" @click="logout">

@@ -5,6 +5,7 @@
 import type { Server as HttpServer } from 'http';
 import { Server, type Socket } from 'socket.io';
 import { verifyToken } from '../services/auth.service';
+import { prisma } from '../lib/prisma';
 import type { UserType } from '../types/user';
 
 let io: Server | null = null;
@@ -12,6 +13,17 @@ let io: Server | null = null;
 interface SocketData {
   userId: string;
   userType: UserType;
+}
+
+// vacancy 룸(vacancy:{vacancyId}:agent:{agentId})에서 공실 소유 임대인 id 조회
+async function ownerOfVacancyRoom(roomId: string): Promise<string | null> {
+  const m = /^vacancy:([^:]+):agent:/.exec(roomId);
+  if (!m) return null;
+  const vacancy = await prisma.vacancy.findUnique({
+    where: { id: m[1] },
+    select: { building: { select: { ownerId: true } } },
+  });
+  return vacancy?.building?.ownerId ?? null;
 }
 
 export function initChatSocket(httpServer: HttpServer): Server {
@@ -43,7 +55,7 @@ export function initChatSocket(httpServer: HttpServer): Server {
       if (roomId) socket.leave(roomId);
     });
 
-    socket.on('chat:send', ({ roomId, text }: { roomId: string; text: string }) => {
+    socket.on('chat:send', async ({ roomId, text }: { roomId: string; text: string }) => {
       const body = (text ?? '').trim();
       if (!roomId || !body) return;
       const message = {
@@ -55,6 +67,16 @@ export function initChatSocket(httpServer: HttpServer): Server {
         createdAt: new Date().toISOString(),
       };
       io?.to(roomId).emit('chat:message', message); // 보낸 사람 포함 룸 전체
+
+      // 공실 문의(vacancy 룸): 룸에 아직 없는 임대인에게도 개인 룸으로 전달 → 수신함 스레드 생성
+      try {
+        const ownerId = await ownerOfVacancyRoom(roomId);
+        if (ownerId && ownerId !== userId) {
+          io?.to(`user:${ownerId}`).emit('chat:message', message);
+        }
+      } catch {
+        /* 소유자 조회 실패는 무시(룸 릴레이는 이미 완료) */
+      }
     });
   });
 

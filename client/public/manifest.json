@@ -18,6 +18,12 @@
       "purpose": "any"
     },
     {
+      "src": "/icons/butler.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
       "src": "/icons/butler-maskable.svg",
       "sizes": "any",
       "type": "image/svg+xml",

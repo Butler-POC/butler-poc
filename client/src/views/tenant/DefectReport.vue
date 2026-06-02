@@ -27,15 +27,14 @@ const issues = useIssuesStore();
 const leases = useLeasesStore();
 
 const form = reactive<IssueReportInput>({
-  buildingId: '',
-  tenantId: '', // 서버에서 req.user 로 보정됨
+  leaseId: '', // 임차인 본인 계약 — 서버가 주소로 임대인 Building 을 연결
   category: (route.query.category as IssueCategory) || 'plumbing',
   description: (route.query.description as string) || '',
   proposedRepairRate: Number(route.query.rate) || 0,
 });
 
 const canSubmit = computed(
-  () => form.buildingId && form.description.trim() && form.proposedRepairRate >= 0 && form.proposedRepairRate <= 100,
+  () => !!form.leaseId && form.description.trim() && form.proposedRepairRate >= 0 && form.proposedRepairRate <= 100,
 );
 
 async function submit() {
@@ -48,7 +47,7 @@ onMounted(async () => {
   await leases.fetch();
   // 임차 계약이 하나면 자동 선택
   const first = leases.items?.[0];
-  if (first && !form.buildingId) form.buildingId = first.id;
+  if (first && !form.leaseId) form.leaseId = first.id;
 });
 </script>
 
@@ -64,7 +63,7 @@ onMounted(async () => {
       <form class="form" @submit.prevent="submit">
         <label class="field">
           <span class="label">건물</span>
-          <select v-model="form.buildingId" class="control">
+          <select v-model="form.leaseId" class="control">
             <option value="" disabled>임차 건물을 선택하세요</option>
             <option v-for="l in leases.items ?? []" :key="l.id" :value="l.id">
               {{ l.address }}{{ l.unit ? ` ${l.unit}` : '' }}
