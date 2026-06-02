@@ -26,11 +26,41 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const searched = ref(false);
 
+const geo = ref<{ lat: number; lng: number } | null>(null); // 현재 위치
+const locating = ref(false);
+const geoNote = ref<string | null>(null);
+
+// 센터 우선순위: 현재 위치 → (건물 좌표) → 기본(서울시청)
 const center = computed(() => {
+  if (geo.value) return geo.value;
   const b: any = (buildings.items ?? []).find((x: any) => x.id === buildingId.value);
   if (b && typeof b.lat === 'number' && typeof b.lng === 'number') return { lat: b.lat, lng: b.lng };
   return DEFAULT_CENTER;
 });
+
+// 브라우저 Geolocation 으로 현재 위치를 받아 센터로 사용
+function locate() {
+  if (!('geolocation' in navigator)) {
+    geoNote.value = '이 브라우저는 위치 기능을 지원하지 않아 기본 위치로 표시합니다.';
+    if (!searched.value) search();
+    return;
+  }
+  locating.value = true;
+  geoNote.value = null;
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      geo.value = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      locating.value = false;
+      search(); // 현재 위치 기준으로 조회
+    },
+    () => {
+      locating.value = false;
+      geoNote.value = '위치 권한이 없어 기본 위치(서울시청)로 표시합니다.';
+      if (!searched.value) search();
+    },
+    { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 },
+  );
+}
 
 async function search() {
   loading.value = true;
@@ -61,6 +91,7 @@ onMounted(async () => {
   await buildings.fetch();
   const first = buildings.items?.[0];
   if (first) buildingId.value = first.id;
+  locate(); // 현재 위치 우선 반영
 });
 </script>
 
@@ -92,6 +123,15 @@ onMounted(async () => {
       >
         {{ c.label }}
       </button>
+    </div>
+
+    <!-- 현재 위치 -->
+    <div class="loc">
+      <button class="loc__btn" type="button" :disabled="locating" @click="locate">
+        {{ locating ? '위치 확인 중…' : '📍 현재 위치로' }}
+      </button>
+      <span v-if="geo" class="loc__on">현재 위치 반영됨</span>
+      <span v-else-if="geoNote" class="loc__note">{{ geoNote }}</span>
     </div>
 
     <!-- 지도 -->
@@ -172,6 +212,35 @@ onMounted(async () => {
   display: flex;
   gap: var(--s-3, 8px);
   flex-wrap: wrap;
+}
+.loc {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3, 8px);
+  flex-wrap: wrap;
+}
+.loc__btn {
+  padding: 8px 14px;
+  min-height: 40px;
+  border: 1px solid var(--slate-300, #cacfd8);
+  border-radius: var(--r-pill, 999px);
+  background: var(--paper-raised, #fff);
+  color: var(--ink, #1e2331);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.loc__btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.loc__on {
+  font-size: 12px;
+  color: var(--sage, #4e8a6f);
+}
+.loc__note {
+  font-size: 12px;
+  color: var(--ink-3, #5e6675);
 }
 .cat {
   padding: 8px 16px;

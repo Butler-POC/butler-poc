@@ -16,7 +16,8 @@ onMounted(async () => {
     await init(el.value, props.center);
     renderVendors(props.vendors);
   } catch (e) {
-    error.value = '지도를 불러오지 못했습니다.';
+    // 실제 사유 노출 (키 미설정 / SDK 로드 실패 / 도메인 미등록 등)
+    error.value = `지도를 불러오지 못했습니다: ${e instanceof Error ? e.message : String(e)}`;
   }
 });
 
