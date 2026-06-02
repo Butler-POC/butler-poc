@@ -25,19 +25,22 @@ const ROLE_FEATURES: Record<UserType, Feature[]> = {
     { code: 'L-01', name: '내 건물 등록', to: '/app/landlord/buildings' },
     { code: 'L-02', name: '건축물대장 등록', to: '/app/landlord/buildings' },
     { code: 'L-03', name: '임차인 등록', to: '/app/landlord/buildings' },
-    { code: 'L-04', name: '월세 연체 표시' },
-    { code: 'L-05', name: '수선 업체 조회' },
-    { code: 'L-06', name: '간단 법률 상담' },
+    { code: 'L-04', name: '월세 연체 표시', to: '/app/landlord/buildings' },
+    { code: 'L-05', name: '수선 업체 조회', to: '/app/landlord/vendors' },
+    { code: 'L-06', name: '간단 법률 상담', to: '/app/landlord/legal' },
     { code: 'L-07', name: '공실 등록', to: '/app/landlord/buildings' },
+    { code: 'T-03', name: '하자 수신함', to: '/app/landlord/issues' },
+    { code: 'A-02', name: '공실 문의함', to: '/app/landlord/vacancy-chats' },
   ],
   TENANT: [
     { code: 'T-01', name: '임차 건물 등록', to: '/app/tenant/leases' },
-    { code: 'T-02', name: '하자 상담' },
-    { code: 'T-03', name: '하자 제보' },
+    { code: 'T-02', name: '하자 상담', to: '/app/tenant/defects/chat' },
+    { code: 'T-03', name: '하자 제보', to: '/app/tenant/defects/report' },
+    { code: 'T-03', name: '제보 이력', to: '/app/tenant/defects' },
   ],
   AGENT: [
-    { code: 'A-01', name: '공실 조회' },
-    { code: 'A-02', name: '건물주 연결' },
+    { code: 'A-01', name: '공실 조회', to: '/app/agent/vacancies' },
+    { code: 'A-02', name: '건물주 연결', to: '/app/agent/vacancies' },
   ],
 };
 
@@ -80,7 +83,7 @@ function open(f: Feature) {
       <ul class="list">
         <li
           v-for="f in features"
-          :key="f.code"
+          :key="f.code + f.name"
           class="row"
           :class="{ enabled: !!f.to }"
           @click="open(f)"
