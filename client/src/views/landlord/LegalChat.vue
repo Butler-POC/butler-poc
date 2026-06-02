@@ -5,6 +5,7 @@
 <script setup lang="ts">
 import { ref, nextTick } from 'vue';
 import { api as http } from '@/api/client';
+import BackHome from '@/components/layout/BackHome.vue';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 
@@ -48,6 +49,7 @@ async function send() {
 
 <template>
   <section class="page">
+    <div class="chat-back"><BackHome /></div>
     <header class="bar">
       <div>
         <p class="eyebrow">간단 법률 상담</p>
@@ -93,6 +95,9 @@ async function send() {
   flex-direction: column;
   height: 100%;
   background: var(--paper, #fbfaf6);
+}
+.chat-back {
+  padding: var(--s-4, 12px) var(--s-6, 20px) 0;
 }
 .bar {
   padding: var(--s-5, 16px) var(--s-6, 20px);

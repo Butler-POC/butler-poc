@@ -6,6 +6,7 @@ import { ref, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { repairChat, type RepairChatResult } from '@/api/issues';
 import type { IssueCategory, RepairRateAssessment } from '@/types';
+import BackHome from '@/components/layout/BackHome.vue';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 
@@ -77,6 +78,7 @@ function goReport() {
 
 <template>
   <section class="page">
+    <div class="chat-back"><BackHome /></div>
     <header class="bar">
       <p class="eyebrow">하자 상담</p>
       <h1 class="bar__title">하자를 상담하세요</h1>
@@ -137,6 +139,9 @@ function goReport() {
   flex-direction: column;
   height: 100%;
   background: var(--paper, #fbfaf6);
+}
+.chat-back {
+  padding: var(--s-4, 12px) var(--s-6, 20px) 0;
 }
 .bar {
   padding: var(--s-5, 16px) var(--s-6, 20px) var(--s-4, 12px);

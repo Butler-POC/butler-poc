@@ -6,6 +6,7 @@ import { useRouter } from 'vue-router';
 import { useVacanciesStore } from '@/stores/vacancies';
 import BaseCard from '@/components/ui/BaseCard.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
+import BackHome from '@/components/layout/BackHome.vue';
 
 const vacancies = useVacanciesStore();
 const router = useRouter();
@@ -27,6 +28,7 @@ onMounted(() => vacancies.loadListing());
 
 <template>
   <section class="page">
+    <BackHome />
     <header class="page__head">
       <p class="eyebrow">매물 조회</p>
       <h1 class="title">공실을 둘러보세요</h1>

@@ -6,6 +6,7 @@ import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { vacancyRoomId } from '@/api/vacancies';
 import VacancyChat from '@/components/domain/VacancyChat.vue';
+import BackHome from '@/components/layout/BackHome.vue';
 
 const route = useRoute();
 const auth = useAuthStore();
@@ -16,6 +17,7 @@ const roomId = computed(() => vacancyRoomId(vacancyId.value, auth.user?.id ?? ''
 
 <template>
   <section class="chat-page">
+    <div class="chat-back"><BackHome /></div>
     <header class="bar">
       <h1 class="bar__title">임대인 연결</h1>
     </header>
@@ -26,6 +28,9 @@ const roomId = computed(() => vacancyRoomId(vacancyId.value, auth.user?.id ?? ''
 </template>
 
 <style scoped>
+.chat-back {
+  padding: var(--s-4, 12px) var(--s-6, 20px) 0;
+}
 .chat-page {
   display: flex;
   flex-direction: column;

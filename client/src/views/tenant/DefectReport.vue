@@ -9,6 +9,7 @@ import { useBuildingsStore } from '@/stores/buildings';
 import type { IssueCategory, IssueReportInput } from '@/types';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import BaseCard from '@/components/ui/BaseCard.vue';
+import BackHome from '@/components/layout/BackHome.vue';
 
 const CATEGORIES: { value: IssueCategory; label: string }[] = [
   { value: 'plumbing', label: '수도/하수' },
@@ -54,6 +55,7 @@ onMounted(() => {
 
 <template>
   <section class="page">
+    <BackHome />
     <header class="head">
       <p class="eyebrow">하자 제보</p>
       <h1 class="title">하자를 제보하세요</h1>

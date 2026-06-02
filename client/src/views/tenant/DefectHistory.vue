@@ -5,6 +5,7 @@ import { onMounted } from 'vue';
 import { useIssuesStore } from '@/stores/issues';
 import type { IssueCategory, IssueStatus } from '@/types';
 import BaseCard from '@/components/ui/BaseCard.vue';
+import BackHome from '@/components/layout/BackHome.vue';
 
 const issues = useIssuesStore();
 
@@ -31,6 +32,7 @@ onMounted(() => issues.loadMine());
 
 <template>
   <section class="page">
+    <BackHome />
     <header class="head">
       <p class="eyebrow">제보 이력</p>
       <h1 class="title">하자 제보 내역</h1>

@@ -16,7 +16,7 @@ const auth = useAuthStore();
 // 모든 앱이 공통으로 쓰는 기능 (C-)
 const COMMON: Feature[] = [
   { code: 'C-01', name: '문서 텍스트 추출', to: '/scan' },
-  { code: 'C-02', name: '챗봇 상담' },
+  { code: 'C-02', name: '챗봇 상담', to: '/chat' },
 ];
 
 // 역할별 기능 (아직 미구현 — 목록만)
@@ -29,8 +29,8 @@ const ROLE_FEATURES: Record<UserType, Feature[]> = {
     { code: 'L-05', name: '수선 업체 조회', to: '/app/landlord/vendors' },
     { code: 'L-06', name: '간단 법률 상담', to: '/app/landlord/legal' },
     { code: 'L-07', name: '공실 등록', to: '/app/landlord/buildings' },
-    { code: 'T-03', name: '하자 수신함', to: '/app/landlord/issues' },
-    { code: 'A-02', name: '공실 문의함', to: '/app/landlord/vacancy-chats' },
+    { code: 'L·하자', name: '하자 수신함', to: '/app/landlord/issues' },
+    { code: 'L·문의', name: '공실 문의함', to: '/app/landlord/vacancy-chats' },
   ],
   TENANT: [
     { code: 'T-01', name: '임차 건물 등록', to: '/app/tenant/leases' },

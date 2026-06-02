@@ -8,6 +8,7 @@ import { fetchVendors } from '@/api/vendors';
 import type { Vendor, VendorCategory } from '@/types';
 import VendorMap from '@/components/domain/VendorMap.vue';
 import BaseCard from '@/components/ui/BaseCard.vue';
+import BackHome from '@/components/layout/BackHome.vue';
 
 const CATEGORIES: { value: VendorCategory; label: string }[] = [
   { value: 'boiler', label: '보일러' },
@@ -65,6 +66,7 @@ onMounted(async () => {
 
 <template>
   <section class="page">
+    <BackHome />
     <header class="head">
       <p class="eyebrow">수선 업체</p>
       <h1 class="title">주변 업체를 찾으세요</h1>

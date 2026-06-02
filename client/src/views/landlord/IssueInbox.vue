@@ -7,6 +7,7 @@ import { useIssuesStore } from '@/stores/issues';
 import { useChatStore } from '@/stores/chat';
 import type { IssueCategory } from '@/types';
 import BaseCard from '@/components/ui/BaseCard.vue';
+import BackHome from '@/components/layout/BackHome.vue';
 
 const issues = useIssuesStore();
 const chat = useChatStore();
@@ -35,6 +36,7 @@ onBeforeUnmount(() => chat.off?.('issue:reported', onIncoming));
 
 <template>
   <section class="page">
+    <BackHome />
     <header class="head">
       <p class="eyebrow">하자 수신함</p>
       <h1 class="title">접수된 하자</h1>

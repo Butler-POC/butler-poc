@@ -5,6 +5,7 @@
 import { onMounted, ref, computed } from 'vue';
 import { useChatStore } from '@/stores/chat';
 import VacancyChat from '@/components/domain/VacancyChat.vue';
+import BackHome from '@/components/layout/BackHome.vue';
 
 const chat = useChatStore();
 const activeRoom = ref<string | null>(null);
@@ -36,6 +37,7 @@ onMounted(() => chat.loadThreads?.());
     </template>
 
     <template v-else>
+      <div class="chat-back"><BackHome /></div>
       <header class="head">
         <p class="eyebrow">공실 문의</p>
         <h1 class="title">에이전트 문의</h1>
@@ -70,6 +72,9 @@ onMounted(() => chat.loadThreads?.());
   flex-direction: column;
   height: 100%;
   background: var(--paper, #fbfaf6);
+}
+.chat-back {
+  padding: var(--s-4, 12px) var(--s-6, 20px) 0;
 }
 .head {
   padding: var(--s-6, 20px);

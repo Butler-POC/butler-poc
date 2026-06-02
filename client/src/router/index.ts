@@ -15,6 +15,7 @@ import TenantHome from '@/views/tenant/TenantHome.vue';
 import LeasesView from '@/views/tenant/LeasesView.vue';
 import AgentHome from '@/views/agent/AgentHome.vue';
 import ScanView from '@/views/ScanView.vue';
+import ChatBotView from '@/views/ChatBotView.vue'; // C-02 공통 챗봇
 // ── jh 슬라이스 화면(머지 시 추가) ──
 import VendorSearch from '@/views/landlord/VendorSearch.vue'; // L-05
 import LegalChat from '@/views/landlord/LegalChat.vue'; // L-06
@@ -59,6 +60,7 @@ const router = createRouter({
 
     // 공통 기능 (로그인한 모든 역할)
     { path: '/scan', name: 'scan', component: ScanView, meta: { requiresAuth: true } },
+    { path: '/chat', name: 'chatbot', component: ChatBotView, meta: { requiresAuth: true } },
 
     { path: '/', redirect: '/login' },
     { path: '/:pathMatch(.*)*', redirect: '/' },
