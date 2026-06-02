@@ -1,26 +1,19 @@
-<!-- C-02 챗봇 공용 컴포넌트 — LLM 요청-응답 채팅 UI -->
-<!-- 재사용: 일반 챗봇 / L-06 법률 / T-02 하자. mode 로 분기, 디스클레이머는 prop 또는 #disclaimer 슬롯으로 노출. -->
-<!-- 가정(기반): @/api/client. (A-02 소켓 채팅 VacancyChat 과는 별개) -->
+<!-- L-06 간단 법률 상담 (버틀러 오너) -->
+<!-- 별도 프롬프트 입력 없이, 서버가 본인 건물·임차인 맥락을 자동 주입한다(POST /api/chat, mode:'legal'). -->
+<!-- ⚠️ AI 출력은 참고용 · 법적 효력 없음 — 디스클레이머 상시 노출(설계 규칙). -->
+<!-- 가정(기반): @/api/client (axios, baseURL '/api') -->
 <script setup lang="ts">
 import { ref, nextTick } from 'vue';
-import { postChat } from '@/api/chat';
-import type { ChatMessage, ChatMode } from '@/types';
+import http from '@/api/client';
 
-const props = withDefaults(
-  defineProps<{
-    mode?: ChatMode;
-    placeholder?: string;
-    disclaimer?: string; // 설정 시 상단 배너 노출(법률/하자 모드에서 채움)
-    intro?: string;
-  }>(),
-  { mode: 'general', placeholder: '메시지를 입력하세요', disclaimer: '', intro: '' },
-);
+type Msg = { role: 'user' | 'assistant'; content: string };
 
-const messages = ref<ChatMessage[]>([]);
+const messages = ref<Msg[]>([]);
 const draft = ref('');
 const loading = ref(false);
 const error = ref<string | null>(null);
 const threadEl = ref<HTMLElement | null>(null);
+const DISCLAIMER = '참고용 · 법적 효력 없음';
 
 async function scrollToEnd() {
   await nextTick();
@@ -34,12 +27,18 @@ async function send() {
   error.value = null;
   messages.value.push({ role: 'user', content: text });
   scrollToEnd();
+
   loading.value = true;
   try {
-    const res = await postChat({ mode: props.mode, message: text, history: messages.value.slice(0, -1) });
-    messages.value.push({ role: 'assistant', content: res.reply });
+    const history = messages.value.slice(0, -1);
+    const { data } = await http.post<{ reply: string; disclaimer: string }>('/chat', {
+      mode: 'legal',
+      message: text,
+      history,
+    });
+    messages.value.push({ role: 'assistant', content: data.reply });
     scrollToEnd();
-  } catch {
+  } catch (e) {
     error.value = '답변을 받지 못했습니다. 다시 시도해 주세요.';
   } finally {
     loading.value = false;
@@ -48,18 +47,26 @@ async function send() {
 </script>
 
 <template>
-  <div class="chat">
-    <!-- 디스클레이머: prop 우선, 없으면 슬롯 -->
-    <div v-if="disclaimer" class="disclaimer" role="note">
+  <section class="page">
+    <header class="bar">
+      <div>
+        <p class="eyebrow">간단 법률 상담</p>
+        <h1 class="bar__title">임대차 상담</h1>
+      </div>
+    </header>
+
+    <!-- 디스클레이머 (상시 노출) -->
+    <div class="disclaimer" role="note">
       <span class="disclaimer__dot" aria-hidden="true" />
-      <span>본 답변은 <strong>{{ disclaimer }}</strong>입니다.</span>
+      <span>본 답변은 <strong>{{ DISCLAIMER }}</strong>입니다. 중요한 사안은 변호사와 상담하세요.</span>
     </div>
-    <slot v-else name="disclaimer" />
 
     <div ref="threadEl" class="thread">
-      <p v-if="messages.length === 0 && intro" class="intro">
-        <span class="intro__dot" aria-hidden="true" />{{ intro }}
+      <p v-if="messages.length === 0" class="intro">
+        <span class="intro__dot" aria-hidden="true" />
+        등록하신 건물·임차인 정보를 바탕으로 답합니다. 궁금한 점을 입력하세요.
       </p>
+
       <div
         v-for="(m, i) in messages"
         :key="i"
@@ -68,24 +75,44 @@ async function send() {
       >
         <p class="bubble__text">{{ m.content }}</p>
       </div>
+
       <p v-if="loading" class="typing">답변을 작성하고 있습니다…</p>
       <p v-if="error" class="error">{{ error }}</p>
     </div>
 
     <form class="compose" @submit.prevent="send">
-      <input v-model="draft" class="compose__input" :placeholder="placeholder" />
+      <input v-model="draft" class="compose__input" placeholder="예) 월세 2개월 연체 시 계약 해지가 가능한가요?" />
       <button class="compose__send" type="submit" :disabled="!draft.trim() || loading">전송</button>
     </form>
-  </div>
+  </section>
 </template>
 
 <style scoped>
-.chat {
+.page {
   display: flex;
   flex-direction: column;
   height: 100%;
   background: var(--paper, #fbfaf6);
 }
+.bar {
+  padding: var(--s-5, 16px) var(--s-6, 20px);
+  border-bottom: 1px solid var(--slate-100, #eceef1);
+}
+.eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brass-ink, #50402a);
+  margin: 0 0 4px;
+}
+.bar__title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink, #1e2331);
+  margin: 0;
+}
+/* amber inline 배너 (Design.md BANNER) */
 .disclaimer {
   display: flex;
   align-items: center;

@@ -1,0 +1,63 @@
+// ───────────────────────────────────────────────────────────────
+// [SLICE: L-07 공실등록 / A-01 공실조회 / T-03 하자제보] 추가 모델
+//
+// ⚠️ datasource·generator·Building·Tenant·User 모델은 "기반"(팀원 담당)으로 가정한다.
+//    - provider = "mysql" (AWS RDS 공용 DB, server/.env DATABASE_URL)
+//    - 본 파일은 슬라이스 모델만 정의한다. 기반 머지 시 datasource/generator 블록과 합쳐진다.
+//    - Building/Tenant/User 와의 관계는 침투를 피해 scalar FK 로만 둔다.
+//      (정식 @relation 연결은 머지 시점에 양쪽 back-relation 과 함께 추가)
+// ───────────────────────────────────────────────────────────────
+
+// === Vacancy (공실) — L-07 등록 / A-01 조회 / A-02 채팅 키 ===
+enum VacancyStatus {
+  available // 모집중
+  closed // 마감
+}
+
+model Vacancy {
+  id          String        @id @default(cuid())
+  buildingId  String // → Building (기반, 가정). 소유 임대인은 building 관계로 추적.
+  unit        String // 호/세대
+  deposit     Int // 보증금 (₩)
+  monthlyRent Int // 월세 (₩)
+  areaM2      Float // 전용면적 (㎡)
+  description String        @db.Text
+  status      VacancyStatus @default(available)
+  createdAt   DateTime      @default(now())
+
+  @@index([buildingId])
+  @@index([status])
+}
+
+// === Issue (하자) — T-02 상담 결과 / T-03 제보·이력 ===
+enum IssueStatus {
+  reported // 제보됨
+  reviewing // 검토중
+  resolved // 처리완료
+}
+
+enum IssueCategory {
+  plumbing // 수도/하수
+  electrical // 전기
+  boiler // 보일러/난방
+  waterproof // 누수/방수
+  interior // 내부 마감
+  appliance // 빌트인 가전
+  other // 기타
+}
+
+model Issue {
+  id                 String        @id @default(cuid())
+  buildingId         String // → Building (기반, 가정)
+  tenantId           String // → Tenant/계약 (기반, 가정)
+  category           IssueCategory
+  description        String        @db.Text
+  photos             Json? // 업로드 파일 경로 배열 (선택). MySQL JSON 컬럼.
+  proposedRepairRate Int // 제안 수선비율 % (0–100)
+  aiNeedsLandlord    Boolean       @default(false) // AI 판정: 임대인 분담/연락 필요
+  status             IssueStatus   @default(reported)
+  createdAt          DateTime      @default(now())
+
+  @@index([buildingId])
+  @@index([tenantId])
+}
