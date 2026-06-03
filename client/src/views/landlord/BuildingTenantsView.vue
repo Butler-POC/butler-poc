@@ -13,6 +13,7 @@ import {
   type Tenant,
 } from '@/api/tenants';
 import { checkUploadSize } from '@/lib/upload';
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue';
 
 const route = useRoute();
 const store = useBuildingsStore();
@@ -157,7 +158,18 @@ async function save() {
   }
 }
 
-async function remove(t: Tenant) {
+const pendingDelete = ref<Tenant | null>(null);
+const deleting = ref(false);
+
+function askDelete(t: Tenant) {
+  pendingDelete.value = t;
+}
+
+async function confirmDelete() {
+  const t = pendingDelete.value;
+  if (!t || deleting.value) return;
+  deleting.value = true;
+  error.value = null;
   try {
     await deleteTenant(buildingId, t.id);
     tenants.value = tenants.value.filter((x) => x.id !== t.id);
@@ -168,8 +180,11 @@ async function remove(t: Tenant) {
         vacancies: b._count?.vacancies ?? 0,
       };
     }
+    pendingDelete.value = null;
   } catch (e: any) {
     error.value = e?.response?.data?.error ?? '삭제에 실패했습니다.';
+  } finally {
+    deleting.value = false;
   }
 }
 
@@ -209,8 +224,8 @@ function markUnpaid(t: Tenant) {
     <RouterLink class="back" to="/app/landlord/buildings">← 목록으로</RouterLink>
 
     <header class="head">
-      <p class="eyebrow">임대인 · L-03</p>
-      <h1 class="title">임차인 등록</h1>
+      <p class="eyebrow">임대인</p>
+      <h1 class="title">임차인 관리</h1>
       <p v-if="building" class="ctx">
         <span class="ctx-addr">{{ building.address }}</span>
         <span v-if="building.buildingName" class="ctx-name">{{ building.buildingName }}</span>
@@ -342,7 +357,6 @@ function markUnpaid(t: Tenant) {
             <span v-if="t.unit" class="unit">{{ t.unit }}</span>
           </div>
           <span class="badge" :class="t.source">{{ t.source === 'ocr' ? 'OCR' : '수동' }}</span>
-          <button class="del" type="button" title="삭제" @click="remove(t)">✕</button>
         </div>
 
         <div class="money">
@@ -383,8 +397,21 @@ function markUnpaid(t: Tenant) {
         </div>
         <p v-if="t.contact" class="contact">{{ t.contact }}</p>
         <p v-if="t.specialTerms" class="terms">{{ t.specialTerms }}</p>
+
+        <button class="card-del" type="button" @click="askDelete(t)">임차인 삭제</button>
       </article>
     </div>
+
+    <ConfirmDialog
+      :open="!!pendingDelete"
+      title="임차인을 삭제할까요?"
+      :busy="deleting"
+      @confirm="confirmDelete"
+      @cancel="pendingDelete = null"
+    >
+      <strong>{{ pendingDelete?.name }}</strong> 임차인을 삭제하면 계약·월세 납부 정보 등
+      이 임차인과 관련된 정보가 모두 삭제되며, 되돌릴 수 없습니다.
+    </ConfirmDialog>
   </div>
 </template>
 
@@ -647,17 +674,22 @@ function markUnpaid(t: Tenant) {
   color: var(--ink-3);
   border: 1px solid var(--slate-200);
 }
-.del {
+.card-del {
+  align-self: stretch;
+  margin-top: 4px;
   appearance: none;
-  border: none;
-  background: transparent;
-  color: var(--ink-4);
-  font-size: 14px;
-  cursor: pointer;
-  padding: 2px 4px;
-}
-.del:hover {
+  border: 1px solid var(--crimson);
+  background: var(--crimson-soft);
   color: var(--crimson);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 10px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+.card-del:active {
+  opacity: 0.8;
 }
 .money {
   display: flex;

@@ -10,10 +10,6 @@ const { items, loading } = storeToRefs(store);
 onMounted(() => {
   if (!store.loaded) store.fetch();
 });
-
-function onRemove(id: string) {
-  store.remove(id);
-}
 </script>
 
 <template>
@@ -21,7 +17,7 @@ function onRemove(id: string) {
     <RouterLink class="back" to="/app/landlord">← 홈으로</RouterLink>
 
     <header class="head">
-      <p class="eyebrow">임대인 · L-01</p>
+      <p class="eyebrow">임대인</p>
       <h1 class="title">내 건물</h1>
     </header>
 
@@ -31,12 +27,7 @@ function onRemove(id: string) {
     <p v-else-if="items.length === 0" class="empty">등록된 건물이 없습니다.</p>
 
     <div v-else class="list">
-      <BuildingCard
-        v-for="b in items"
-        :key="b.id"
-        :building="b"
-        @remove="onRemove"
-      />
+      <BuildingCard v-for="b in items" :key="b.id" :building="b" />
     </div>
   </div>
 </template>

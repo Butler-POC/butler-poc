@@ -2,47 +2,11 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import { APP_META, type UserType } from '@/types/user';
-
-interface Feature {
-  code: string;
-  name: string;
-  to?: string;
-}
+import { APP_META } from '@/types/user';
+import { ROLE_FEATURES, type Feature } from '@/lib/roleFeatures';
 
 const router = useRouter();
 const auth = useAuthStore();
-
-// 모든 앱이 공통으로 쓰는 기능 (C-)
-const COMMON: Feature[] = [
-  { code: 'C-01', name: '문서 텍스트 추출', to: '/scan' },
-  { code: 'C-02', name: '챗봇 상담', to: '/chat' },
-];
-
-// 역할별 기능 (아직 미구현 — 목록만)
-const ROLE_FEATURES: Record<UserType, Feature[]> = {
-  LANDLORD: [
-    { code: 'L-01', name: '내 건물 등록', to: '/app/landlord/buildings' },
-    { code: 'L-02', name: '건축물대장 등록', to: '/app/landlord/buildings' },
-    { code: 'L-03', name: '임차인 등록', to: '/app/landlord/buildings' },
-    { code: 'L-04', name: '월세 연체 표시', to: '/app/landlord/buildings' },
-    { code: 'L-05', name: '수선 업체 조회', to: '/app/landlord/vendors' },
-    { code: 'L-06', name: '간단 법률 상담', to: '/app/landlord/legal' },
-    { code: 'L-07', name: '공실 등록', to: '/app/landlord/buildings' },
-    { code: 'L·하자', name: '하자 수신함', to: '/app/landlord/issues' },
-    { code: 'L·문의', name: '공실 문의함', to: '/app/landlord/vacancy-chats' },
-  ],
-  TENANT: [
-    { code: 'T-01', name: '임차 건물 등록', to: '/app/tenant/leases' },
-    { code: 'T-02', name: '하자 상담', to: '/app/tenant/defects/chat' },
-    { code: 'T-03', name: '하자 제보', to: '/app/tenant/defects/report' },
-    { code: 'T-03', name: '제보 이력', to: '/app/tenant/defects' },
-  ],
-  AGENT: [
-    { code: 'A-01', name: '공실 조회', to: '/app/agent/vacancies' },
-    { code: 'A-02', name: '건물주 연결', to: '/app/agent/chats' },
-  ],
-};
 
 const meta = computed(() => (auth.userType ? APP_META[auth.userType] : null));
 const features = computed(() => (auth.userType ? ROLE_FEATURES[auth.userType] : []));
@@ -59,24 +23,6 @@ function open(f: Feature) {
       <h1 class="title">{{ auth.user?.name }} 님</h1>
       <p class="desc">{{ meta.label }} 전용 기능을 사용할 수 있습니다.</p>
     </header>
-
-    <section class="group">
-      <p class="group-label">공통</p>
-      <ul class="list">
-        <li
-          v-for="f in COMMON"
-          :key="f.code"
-          class="row"
-          :class="{ enabled: !!f.to }"
-          @click="open(f)"
-        >
-          <span class="code">{{ f.code }}</span>
-          <span class="name">{{ f.name }}</span>
-          <span v-if="f.to" class="chev">→</span>
-          <span v-else class="soon">준비 중</span>
-        </li>
-      </ul>
-    </section>
 
     <section class="group">
       <p class="group-label">{{ meta.label }} 기능</p>

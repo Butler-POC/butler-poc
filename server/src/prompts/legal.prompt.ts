@@ -12,8 +12,9 @@ export interface LegalContext {
       deposit?: number;
       monthlyRent?: number;
       leasePeriod?: string; // 예) "2025.03.01 ~ 2027.02.28"
-      overdue?: boolean; // L-04 월세 연체 여부
-      specialTerms?: string; // T-01 특약사항
+      overdue?: boolean; // L-04 월세 연체 여부 (rentState 계산값)
+      overdueMonths?: number; // L-04 연체 개월 수 (overdue 일 때)
+      specialTerms?: string; // L-03 특약사항
     }[];
   }[];
 }
@@ -33,7 +34,9 @@ function renderContext(ctx: LegalContext): string {
                 `보증금 ${won(t.deposit)}`,
                 `월세 ${won(t.monthlyRent)}`,
                 t.leasePeriod ? `계약기간 ${t.leasePeriod}` : null,
-                t.overdue ? '※ 월세 연체 상태' : null,
+                t.overdue
+                  ? `※ 월세 연체${t.overdueMonths ? ` ${t.overdueMonths}개월` : ''} 상태`
+                  : null,
                 t.specialTerms ? `특약: ${t.specialTerms}` : null,
               ].filter(Boolean);
               return `    · ${parts.join(' / ')}`;

@@ -123,7 +123,7 @@ async function save() {
       ...form,
       source: parsed.value ? 'ocr' : 'manual',
     });
-    router.push('/app/landlord/buildings');
+    router.push(`/app/landlord/buildings/${buildingId}`);
   } catch (e: any) {
     error.value =
       e?.response?.data?.error ?? '저장에 실패했습니다. 다시 시도해 주세요.';
@@ -135,10 +135,10 @@ async function save() {
 
 <template>
   <div class="view">
-    <RouterLink class="back" to="/app/landlord/buildings">← 목록으로</RouterLink>
+    <RouterLink class="back" :to="`/app/landlord/buildings/${buildingId}`">← 건물 상세로</RouterLink>
 
     <header class="head">
-      <p class="eyebrow">임대인 · L-02</p>
+      <p class="eyebrow">임대인</p>
       <h1 class="title">{{ isEdit ? '건축물대장 수정' : '내 건물 정보 등록' }}</h1>
       <p class="desc">건축물대장을 스캔하면 정보를 자동으로 채웁니다. 직접 입력도 가능합니다.</p>
       <p v-if="building" class="ctx">
