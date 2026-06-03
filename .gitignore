@@ -1,7 +1,7 @@
 # environmental variable
 **/.env
 **/.env.production
-**/blahblah
+
 # dependencies
 node_modules/
 
