@@ -3,6 +3,7 @@
 <!-- 가정(기반): useBuildingsStore(임대인 건물 { id, address, lat?, lng? }). 좌표 없으면 기본 위치(서울시청). -->
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue';
+import { Geolocation } from '@capacitor/geolocation';
 import { useBuildingsStore } from '@/stores/buildings';
 import { fetchVendors } from '@/api/vendors';
 import type { Vendor, VendorCategory } from '@/types';
@@ -38,28 +39,31 @@ const center = computed(() => {
   return DEFAULT_CENTER;
 });
 
-// 브라우저 Geolocation 으로 현재 위치를 받아 센터로 사용
-function locate() {
-  if (!('geolocation' in navigator)) {
-    geoNote.value = '이 브라우저는 위치 기능을 지원하지 않아 기본 위치로 표시합니다.';
-    if (!searched.value) search();
-    return;
-  }
+// 현재 위치를 받아 센터로 사용 (@capacitor/geolocation — 네이티브 런타임 권한 요청 + 웹 지원)
+async function locate() {
   locating.value = true;
   geoNote.value = null;
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      geo.value = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      locating.value = false;
-      search(); // 현재 위치 기준으로 조회
-    },
-    () => {
-      locating.value = false;
-      geoNote.value = '위치 권한이 없어 기본 위치(서울시청)로 표시합니다.';
+  try {
+    // 네이티브(갤럭시 등)에서 위치 권한 다이얼로그를 띄운다
+    const perm = await Geolocation.requestPermissions().catch(() => null);
+    if (perm && perm.location !== 'granted' && perm.coarseLocation !== 'granted') {
+      geoNote.value = '위치 권한이 거부되어 기본 위치(서울시청)로 표시합니다. 설정 > 앱 > Butler > 권한에서 위치를 허용해 주세요.';
       if (!searched.value) search();
-    },
-    { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 },
-  );
+      return;
+    }
+    const pos = await Geolocation.getCurrentPosition({
+      enableHighAccuracy: true,
+      timeout: 8000,
+      maximumAge: 60000,
+    });
+    geo.value = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    search(); // 현재 위치 기준으로 조회
+  } catch {
+    geoNote.value = '위치를 가져오지 못해 기본 위치(서울시청)로 표시합니다.';
+    if (!searched.value) search();
+  } finally {
+    locating.value = false;
+  }
 }
 
 async function search() {
