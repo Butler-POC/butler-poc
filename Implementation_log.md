@@ -16,7 +16,7 @@
 
 ## 📍 다음 작업
 
-**jg ↔ jh 통합(머지) 마무리** — 14개 기능 모두 구현됨. main에서 통합 중(라우트·소켓·공실 모델 배선 + 빌드 검증).
+**없음 — 14개 기능 전부 구현·통합 완료, server/client 빌드 검증 통과.** 추가 작업은 신규 요구사항 발생 시 착수.
 
 ---
 
@@ -84,6 +84,7 @@
 
 > 작업할 때마다 최신 항목을 맨 위에 추가. 형식: `YYYY-MM-DD · 코드 기능명 · 상태 · 작업자 · 메모`
 
+- 2026-06-03 · 통합(머지) · ✅ · StabAn-NRH · 빌드 검증 완료. 신규 PC에서 의존성 미설치(@anthropic-ai/sdk·socket.io·socket.io-client)와 Issue 모델 추가 후 prisma client stale 확인 → server/client `npm install` + `prisma generate` 후 server(tsc)·client(vue-tsc+vite) 빌드 모두 통과. jg=main 동일.
 - 2026-06-02 · 통합(머지) · 🔨 · jh · main에서 jg↔jh 머지. 충돌 4건 해결(schema=jg+Issue추가, llm.service=jg / chat()→chat.service 분리, vacancies.ts=jg, log 통합). 라우트·소켓·공실 모델 배선 + 빌드 검증 진행
 - 2026-06-01 · C-02 챗봇 · ✅ · jh · llm.service(Anthropic SDK, claude-opus-4-8, API 실호출 확인) + routes/chat 디스패처 + IssueChat/api·chatbot 스토어. L-06/T-02/T-03 실배선
 - 2026-06-01 · L-05 수선 업체 조회 · ✅ · jh · kakao.service 키워드검색(REST키 실동작 확인) + vendors 라우트 + useKakaoMap/VendorMap 지도
