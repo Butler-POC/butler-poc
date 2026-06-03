@@ -1,5 +1,6 @@
 # environmental variable
 **/.env
+**/.env.production
 
 # dependencies
 node_modules/
