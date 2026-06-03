@@ -1,5 +1,6 @@
 // Created: 2026-05-31
 import { api } from '@/api/client';
+import type { RentStatus } from '@/api/tenants';
 
 /** 임차 건물(임대차계약서, T-01) 필드 */
 export interface LeaseFields {
@@ -21,6 +22,8 @@ export interface Lease extends LeaseFields {
   id: string;
   source: 'manual' | 'ocr';
   createdAt: string;
+  lastPaidMonth: string | null;
+  rentStatus?: RentStatus;
 }
 
 export interface LeaseParseResult {
@@ -54,4 +57,11 @@ export function listLeases(): Promise<Lease[]> {
 
 export function deleteLease(id: string): Promise<void> {
   return api.delete(`/leases/${id}`).then(() => undefined);
+}
+
+/** 월세 마지막 납부월 설정(납부 처리/취소) */
+export function setLeaseRent(id: string, lastPaidMonth: string | null): Promise<Lease> {
+  return api
+    .patch<Lease>(`/leases/${id}/rent`, { lastPaidMonth })
+    .then((r) => r.data);
 }

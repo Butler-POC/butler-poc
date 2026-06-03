@@ -8,9 +8,11 @@ import SignupView from '@/views/auth/SignupView.vue';
 import LandlordHome from '@/views/landlord/LandlordHome.vue';
 import BuildingsView from '@/views/landlord/BuildingsView.vue';
 import BuildingRegisterView from '@/views/landlord/BuildingRegisterView.vue';
+import BuildingDetailView from '@/views/landlord/BuildingDetailView.vue';
 import BuildingLedgerView from '@/views/landlord/BuildingLedgerView.vue';
 import BuildingTenantsView from '@/views/landlord/BuildingTenantsView.vue';
 import BuildingVacanciesView from '@/views/landlord/BuildingVacanciesView.vue';
+import OverdueTenantsView from '@/views/landlord/OverdueTenantsView.vue';
 import TenantHome from '@/views/tenant/TenantHome.vue';
 import LeasesView from '@/views/tenant/LeasesView.vue';
 import AgentHome from '@/views/agent/AgentHome.vue';
@@ -24,7 +26,6 @@ import VacancyChats from '@/views/landlord/VacancyChats.vue'; // A-02 오너측
 import DefectChat from '@/views/tenant/DefectChat.vue'; // T-02
 import DefectReport from '@/views/tenant/DefectReport.vue'; // T-03
 import DefectHistory from '@/views/tenant/DefectHistory.vue'; // T-03 이력
-import VacancyList from '@/views/agent/VacancyList.vue'; // A-01
 import OwnerChat from '@/views/agent/OwnerChat.vue'; // A-02 단일 대화(에이전트측)
 import AgentChats from '@/views/agent/AgentChats.vue'; // A-02 임대인 대화 목록
 
@@ -38,9 +39,11 @@ const router = createRouter({
     { path: '/app/landlord', name: 'landlord', component: LandlordHome, meta: { requiresAuth: true, role: 'LANDLORD' } },
     { path: '/app/landlord/buildings', name: 'landlord-buildings', component: BuildingsView, meta: { requiresAuth: true, role: 'LANDLORD' } },
     { path: '/app/landlord/buildings/new', name: 'landlord-building-new', component: BuildingRegisterView, meta: { requiresAuth: true, role: 'LANDLORD' } },
+    { path: '/app/landlord/buildings/:id', name: 'landlord-building-detail', component: BuildingDetailView, meta: { requiresAuth: true, role: 'LANDLORD' } },
     { path: '/app/landlord/buildings/:id/ledger', name: 'landlord-building-ledger', component: BuildingLedgerView, meta: { requiresAuth: true, role: 'LANDLORD' } },
     { path: '/app/landlord/buildings/:id/tenants', name: 'landlord-building-tenants', component: BuildingTenantsView, meta: { requiresAuth: true, role: 'LANDLORD' } },
-    { path: '/app/landlord/buildings/:id/vacancies', name: 'landlord-building-vacancies', component: BuildingVacanciesView, meta: { requiresAuth: true, role: 'LANDLORD' } },
+    { path: '/app/landlord/vacancies', name: 'landlord-vacancies', component: BuildingVacanciesView, meta: { requiresAuth: true, role: 'LANDLORD' } },
+    { path: '/app/landlord/overdue', name: 'landlord-overdue', component: OverdueTenantsView, meta: { requiresAuth: true, role: 'LANDLORD' } },
     // L-05 수선 업체 / L-06 법률 상담 / T-03 하자 수신함 / A-02 공실 문의(오너측)
     { path: '/app/landlord/vendors', name: 'landlord-vendors', component: VendorSearch, meta: { requiresAuth: true, role: 'LANDLORD' } },
     { path: '/app/landlord/legal', name: 'landlord-legal', component: LegalChat, meta: { requiresAuth: true, role: 'LANDLORD' } },
@@ -54,9 +57,9 @@ const router = createRouter({
     { path: '/app/tenant/defects/chat', name: 'tenant-defect-chat', component: DefectChat, meta: { requiresAuth: true, role: 'TENANT' } },
     { path: '/app/tenant/defects/report', name: 'tenant-defect-report', component: DefectReport, meta: { requiresAuth: true, role: 'TENANT' } },
 
+    // 메인화면 = A-01 공실 조회
     { path: '/app/agent', name: 'agent', component: AgentHome, meta: { requiresAuth: true, role: 'AGENT' } },
-    // A-01 공실 조회 / A-02 건물주 연결(에이전트측)
-    { path: '/app/agent/vacancies', name: 'agent-vacancies', component: VacancyList, meta: { requiresAuth: true, role: 'AGENT' } },
+    // A-02 건물주 연결(에이전트측)
     { path: '/app/agent/vacancies/:vacancyId/chat', name: 'agent-owner-chat', component: OwnerChat, meta: { requiresAuth: true, role: 'AGENT' } },
     { path: '/app/agent/chats', name: 'agent-chats', component: AgentChats, meta: { requiresAuth: true, role: 'AGENT' } },
 

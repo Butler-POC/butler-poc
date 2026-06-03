@@ -2,8 +2,9 @@
 import { onMounted, reactive, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useLeasesStore } from '@/stores/leases';
-import { parseLease, type LeaseFields } from '@/api/leases';
+import { parseLease, setLeaseRent, type Lease, type LeaseFields } from '@/api/leases';
 import { checkUploadSize } from '@/lib/upload';
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue';
 
 const store = useLeasesStore();
 const { items, loading } = storeToRefs(store);
@@ -123,12 +124,56 @@ async function save() {
   }
 }
 
-function onRemove(id: string) {
-  store.remove(id);
+const pendingDelete = ref<Lease | null>(null);
+const deleting = ref(false);
+
+function askDelete(l: Lease) {
+  pendingDelete.value = l;
+}
+
+async function confirmDelete() {
+  const l = pendingDelete.value;
+  if (!l || deleting.value) return;
+  deleting.value = true;
+  error.value = null;
+  try {
+    await store.remove(l.id);
+    pendingDelete.value = null;
+  } catch (e: any) {
+    error.value = e?.response?.data?.error ?? '삭제에 실패했습니다.';
+  } finally {
+    deleting.value = false;
+  }
 }
 
 function won(v: number | null): string {
   return v == null ? '' : `₩${v.toLocaleString()}`;
+}
+
+/* 월세 납부 처리/취소 (임대인 임차인 카드와 동일 메커니즘) */
+function prevMonth(ym: string): string {
+  const [y, m] = ym.split('-').map(Number);
+  return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
+}
+
+async function applyRent(l: Lease, lastPaidMonth: string) {
+  try {
+    const updated = await setLeaseRent(l.id, lastPaidMonth);
+    const i = items.value.findIndex((x) => x.id === l.id);
+    if (i !== -1) items.value[i] = updated;
+  } catch (e: any) {
+    error.value = e?.response?.data?.error ?? '월세 상태 변경에 실패했습니다.';
+  }
+}
+
+function markPaid(l: Lease) {
+  const due = l.rentStatus?.dueMonth;
+  if (due) applyRent(l, due);
+}
+
+function markUnpaid(l: Lease) {
+  const due = l.rentStatus?.dueMonth;
+  if (due) applyRent(l, prevMonth(due));
 }
 </script>
 
@@ -137,7 +182,7 @@ function won(v: number | null): string {
     <RouterLink class="back" to="/app/tenant">← 홈으로</RouterLink>
 
     <header class="head">
-      <p class="eyebrow">임차인 · T-01</p>
+      <p class="eyebrow">임차인</p>
       <h1 class="title">임차 건물</h1>
       <p class="desc">임대차계약서를 스캔하면 정보를 자동으로 채웁니다. 직접 입력도 가능합니다.</p>
     </header>
@@ -254,10 +299,14 @@ function won(v: number | null): string {
     <p v-else-if="items.length === 0 && !adding" class="empty">등록된 임차 건물이 없습니다.</p>
 
     <div v-if="items.length" class="list">
-      <article v-for="l in items" :key="l.id" class="card">
+      <article
+        v-for="l in items"
+        :key="l.id"
+        class="card"
+        :class="{ overdue: l.rentStatus?.state === 'OVERDUE' }"
+      >
         <div class="card-top">
           <span class="badge" :class="l.source">{{ l.source === 'ocr' ? 'OCR' : '수동' }}</span>
-          <button class="del" type="button" title="삭제" @click="onRemove(l.id)">✕</button>
         </div>
 
         <h3 class="addr">{{ l.address }}</h3>
@@ -272,13 +321,53 @@ function won(v: number | null): string {
           <span v-if="l.paymentDay != null" class="m">납부일 <strong class="numeric">매월 {{ l.paymentDay }}일</strong></span>
         </div>
 
+        <div
+          v-if="l.rentStatus && l.rentStatus.state !== 'NO_RENT'"
+          class="rent"
+          :class="l.rentStatus.state.toLowerCase()"
+        >
+          <span class="rent-label">
+            <template v-if="l.rentStatus.state === 'OVERDUE'">
+              ⚠ 월세 연체 {{ l.rentStatus.overdueMonths }}개월 (최종납부 {{ l.rentStatus.lastPaidMonth }})
+            </template>
+            <template v-else-if="l.rentStatus.state === 'PAID'">
+              월세 납부 완료 ({{ l.rentStatus.lastPaidMonth }})
+            </template>
+            <template v-else>월세 납부 정보 없음</template>
+          </span>
+          <button
+            v-if="l.rentStatus.state === 'PAID'"
+            class="rent-btn"
+            type="button"
+            @click="markUnpaid(l)"
+          >
+            납부 취소
+          </button>
+          <button v-else class="rent-btn pay" type="button" @click="markPaid(l)">
+            {{ l.rentStatus.dueMonth }} 납부 처리
+          </button>
+        </div>
+
         <div v-if="l.leaseStart || l.leaseEnd" class="lease">
           계약기간 {{ l.leaseStart || '?' }} ~ {{ l.leaseEnd || '?' }}
         </div>
         <p v-if="l.lessorName" class="lessor">임대인 {{ l.lessorName }}</p>
         <p v-if="l.specialTerms" class="terms">{{ l.specialTerms }}</p>
+
+        <button class="card-del" type="button" @click="askDelete(l)">임차 건물 삭제</button>
       </article>
     </div>
+
+    <ConfirmDialog
+      :open="!!pendingDelete"
+      title="임차 건물을 삭제할까요?"
+      :busy="deleting"
+      @confirm="confirmDelete"
+      @cancel="pendingDelete = null"
+    >
+      <strong>{{ pendingDelete?.buildingName || pendingDelete?.address }}</strong> 임차 건물을
+      삭제하면 계약·월세 납부 정보 등 관련된 정보가 모두 삭제되며, 되돌릴 수 없습니다.
+    </ConfirmDialog>
   </div>
 </template>
 
@@ -511,18 +600,22 @@ function won(v: number | null): string {
   color: var(--ink-3);
   border: 1px solid var(--slate-200);
 }
-.del {
-  margin-left: auto;
+.card-del {
+  align-self: stretch;
+  margin-top: 4px;
   appearance: none;
-  border: none;
-  background: transparent;
-  color: var(--ink-4);
-  font-size: 14px;
-  cursor: pointer;
-  padding: 2px 4px;
-}
-.del:hover {
+  border: 1px solid var(--crimson);
+  background: var(--crimson-soft);
   color: var(--crimson);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 10px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+.card-del:active {
+  opacity: 0.8;
 }
 .addr {
   font-size: 16px;
@@ -564,5 +657,52 @@ function won(v: number | null): string {
   background: var(--paper-sunk);
   border-radius: var(--r-input);
   padding: 8px 10px;
+}
+/* 월세 납부 상태 (임대인 임차인 카드와 동일) */
+.card.overdue {
+  border-color: var(--crimson);
+  box-shadow: 0 0 0 1px var(--crimson) inset, var(--shadow-1);
+}
+.rent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  border-radius: var(--r-input);
+  padding: 8px 10px;
+}
+.rent-label {
+  font-weight: 600;
+}
+.rent.overdue {
+  background: var(--crimson-soft);
+  color: var(--crimson);
+}
+.rent.paid {
+  background: var(--sage-soft);
+  color: var(--sage);
+}
+.rent.unknown {
+  background: var(--paper-sunk);
+  color: var(--ink-3);
+}
+.rent-btn {
+  margin-left: auto;
+  appearance: none;
+  border: 1px solid var(--slate-200);
+  background: var(--paper);
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 5px 11px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+.rent-btn.pay {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
 }
 </style>

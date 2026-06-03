@@ -18,29 +18,39 @@ import {
   type RepairContext,
 } from '../prompts/repairRate.prompt';
 import { assessRepairRate } from '../services/repairRate.service';
+import { rentState } from '../services/tenants.service';
 import type { ChatMessage } from '../types';
 
 // 임대인 본인 데이터를 LegalContext 로 합성
 async function buildOwnerLegalContext(ownerId: string, ownerName?: string): Promise<LegalContext> {
   const buildings = await prisma.building.findMany({
     where: { ownerId },
-    include: { tenants: true }, // 기반 Building→Tenant 관계 가정
+    include: { tenants: true },
   });
 
   return {
     ownerName,
-    buildings: (buildings ?? []).map((b: any) => ({
+    buildings: buildings.map((b) => ({
       address: b.address ?? '주소 미상',
-      tenants: (b.tenants ?? []).map((t: any) => ({
-        name: t.name,
-        unit: t.unit,
-        deposit: t.deposit,
-        monthlyRent: t.monthlyRent,
-        leasePeriod:
-          t.leaseStart && t.leaseEnd ? `${t.leaseStart} ~ ${t.leaseEnd}` : t.leasePeriod ?? undefined,
-        overdue: t.overdue ?? t.isOverdue ?? false, // L-04 연체 플래그(필드명 미확정 대비)
-        specialTerms: t.specialTerms ?? t.specialTerm ?? undefined, // T-01 특약사항
-      })),
+      tenants: b.tenants.map((t) => {
+        // 연체 여부는 저장 필드가 아니라 lastPaidMonth + paymentDay 로 계산한다(L-04 rentState).
+        const rs = rentState({
+          monthlyRent: t.monthlyRent,
+          paymentDay: t.paymentDay,
+          lastPaidMonth: t.lastPaidMonth,
+        });
+        return {
+          name: t.name,
+          unit: t.unit ?? undefined,
+          deposit: t.deposit ?? undefined,
+          monthlyRent: t.monthlyRent ?? undefined,
+          leasePeriod:
+            t.leaseStart && t.leaseEnd ? `${t.leaseStart} ~ ${t.leaseEnd}` : undefined,
+          overdue: rs.state === 'OVERDUE',
+          overdueMonths: rs.state === 'OVERDUE' ? rs.overdueMonths : undefined,
+          specialTerms: t.specialTerms ?? undefined, // L-03 특약사항
+        };
+      }),
     })),
   };
 }

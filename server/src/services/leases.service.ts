@@ -2,6 +2,7 @@
 import { prisma } from '../lib/prisma';
 import { extractJSONFromMedia } from './llm.service';
 import { LEASE_EXTRACT_PROMPT } from '../prompts/lease.prompt';
+import { rentState } from './tenants.service';
 import { HttpError } from '../middleware/error';
 
 /** 임차 건물(임대차계약서, T-01)에서 추출하는 필드 */
@@ -74,16 +75,40 @@ export async function parseLeaseFromMedia(
 }
 
 export async function listLeases(userId: string) {
-  return prisma.lease.findMany({
+  const now = new Date();
+  const rows = await prisma.lease.findMany({
     where: { userId },
     orderBy: { createdAt: 'desc' },
   });
+  return rows.map((l) => ({ ...l, rentStatus: rentState(l, now) }));
 }
 
 export async function getLease(userId: string, id: string) {
   const lease = await prisma.lease.findFirst({ where: { id, userId } });
   if (!lease) throw new HttpError(404, '임차 건물을 찾을 수 없습니다.');
-  return lease;
+  return { ...lease, rentStatus: rentState(lease) };
+}
+
+/** 마지막 납부월 설정(납부 처리/취소). lastPaidMonth = "YYYY-MM" 또는 null. */
+export async function setLastPaidMonth(
+  userId: string,
+  leaseId: string,
+  lastPaidMonth: string | null,
+) {
+  if (lastPaidMonth !== null && !/^\d{4}-\d{2}$/.test(lastPaidMonth)) {
+    throw new HttpError(400, '월 형식이 올바르지 않습니다. (YYYY-MM)');
+  }
+  const existing = await prisma.lease.findFirst({
+    where: { id: leaseId, userId },
+    select: { id: true },
+  });
+  if (!existing) throw new HttpError(404, '임차 건물을 찾을 수 없습니다.');
+
+  const updated = await prisma.lease.update({
+    where: { id: leaseId },
+    data: { lastPaidMonth },
+  });
+  return { ...updated, rentStatus: rentState(updated) };
 }
 
 export async function createLease(userId: string, input: CreateLeaseInput) {
@@ -102,6 +127,17 @@ export async function createLease(userId: string, input: CreateLeaseInput) {
 }
 
 export async function deleteLease(userId: string, id: string) {
-  const result = await prisma.lease.deleteMany({ where: { id, userId } });
-  if (result.count === 0) throw new HttpError(404, '임차 건물을 찾을 수 없습니다.');
+  // 본인 계약인지 먼저 확인 (소유 검증)
+  const lease = await prisma.lease.findFirst({
+    where: { id, userId },
+    select: { id: true },
+  });
+  if (!lease) throw new HttpError(404, '임차 건물을 찾을 수 없습니다.');
+
+  // Issue 는 Lease 와 관계(FK cascade) 없이 scalar leaseId 로만 연결되므로,
+  // 계약 삭제 시 이 계약에서 제보한 하자(T-03)도 함께 정리한다.
+  await prisma.$transaction([
+    prisma.issue.deleteMany({ where: { leaseId: id, tenantId: userId } }),
+    prisma.lease.delete({ where: { id } }),
+  ]);
 }

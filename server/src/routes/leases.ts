@@ -8,6 +8,7 @@ import {
   list,
   parse,
   remove,
+  setRent,
 } from '../controllers/leases.controller';
 
 const router = Router();
@@ -19,6 +20,7 @@ router.post('/parse', uploadOcr, parse); // 임대차계약서 OCR 파싱 (저�
 router.get('/', list);
 router.post('/', create);
 router.get('/:id', detail);
+router.patch('/:id/rent', setRent); // 월세 납부월 설정(납부 처리/취소)
 router.delete('/:id', remove);
 
 export default router;

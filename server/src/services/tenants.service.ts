@@ -162,6 +162,41 @@ export async function listTenants(ownerId: string, buildingId: string) {
   return rows.map((t) => ({ ...t, rentStatus: rentState(t, now) }));
 }
 
+/** 임대인의 전 건물에서 현재 월세 연체(OVERDUE) 상태인 임차인을 모아 반환 */
+export async function listOverdueTenants(ownerId: string) {
+  const now = new Date();
+  const rows = await prisma.tenant.findMany({
+    where: { building: { ownerId } },
+    include: {
+      building: { select: { id: true, address: true, buildingName: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return rows
+    .map((t) => ({ t, rentStatus: rentState(t, now) }))
+    .filter(({ rentStatus }) => rentStatus.state === 'OVERDUE')
+    .map(({ t, rentStatus }) => ({
+      id: t.id,
+      buildingId: t.buildingId,
+      buildingName: t.building.buildingName,
+      address: t.building.address,
+      name: t.name,
+      unit: t.unit,
+      contact: t.contact,
+      monthlyRent: t.monthlyRent,
+      paymentDay: t.paymentDay,
+      rentStatus,
+    }))
+    // 연체 개월수 많은 순 → 같으면 이름순
+    .sort((a, b) => {
+      if (a.rentStatus.overdueMonths !== b.rentStatus.overdueMonths) {
+        return b.rentStatus.overdueMonths - a.rentStatus.overdueMonths;
+      }
+      return a.name.localeCompare(b.name, 'ko');
+    });
+}
+
 export async function createTenant(
   ownerId: string,
   buildingId: string,

@@ -124,7 +124,7 @@ async function save() {
     <RouterLink class="back" to="/app/landlord/buildings">← 목록으로</RouterLink>
 
     <header class="head">
-      <p class="eyebrow">임대인 · L-01</p>
+      <p class="eyebrow">임대인</p>
       <h1 class="title">내 건물 등록</h1>
       <p class="desc">등기사항증명서를 스캔하면 정보를 자동으로 채웁니다. 직접 입력도 가능합니다.</p>
     </header>

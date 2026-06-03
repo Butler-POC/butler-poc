@@ -114,6 +114,8 @@ model Tenant {
   contractDate String? // 계약 체결일
   specialTerms String? @db.Text // 특약사항 — T-02 하자 상담에서 활용
 
+  renewedImplicitly Boolean @default(false) // 묵시적 갱신 표시 — 참이면 계약기간 관련 전달사항(만료임박·공실) 중단
+
   source  String  @default("manual") // "manual" | "ocr"
   rawText String? @db.Text // OCR 원문 (참고용)
 
@@ -183,6 +185,7 @@ model Lease {
   monthlyRent    Float? // 월세(원)
   maintenanceFee Float? // 관리비(원)
   paymentDay     Int? // 월세 납부일(1~31)
+  lastPaidMonth  String? // 마지막 월세 납부월(YYYY-MM) — 임차인 메인화면 연체/납부 판정
 
   leaseStart   String? // 계약 시작일
   leaseEnd     String? // 계약 종료일
@@ -234,4 +237,21 @@ model Issue {
   @@index([buildingId])
   @@index([tenantId])
   @@map("issues")
+}
+
+/// 메인화면 전달사항(임대인 홈) — 사용자가 삭제한 전달사항 기록.
+/// noticeKey 로 항목을 식별(예: "due:<tenantId>:2026-06", "exp:<tenantId>:2026-07-31").
+/// 영구 숨김 항목(만료임박·공실·해당월 월세납부)은 행 존재만으로 숨김,
+/// 연체(od:)는 dismissedOn == 오늘 일 때만 숨김(다음날 재노출).
+model DigestDismissal {
+  id          String @id @default(cuid())
+  ownerId     String // 임대인(User) id
+  noticeKey   String // 전달사항 식별 키
+  dismissedOn String // 삭제한 날짜(YYYY-MM-DD, 서버 로컬 기준)
+
+  createdAt DateTime @default(now())
+
+  @@unique([ownerId, noticeKey])
+  @@index([ownerId])
+  @@map("digest_dismissals")
 }

@@ -55,6 +55,17 @@ export async function detail(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+/** PATCH /api/leases/:id/rent — 마지막 납부월 설정(납부 처리/취소) */
+export async function setRent(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = (req as AuthedRequest).userId!;
+    const lastPaidMonth = (req.body?.lastPaidMonth ?? null) as string | null;
+    res.json(await leases.setLastPaidMonth(userId, req.params.id, lastPaidMonth));
+  } catch (e) {
+    next(e);
+  }
+}
+
 /** DELETE /api/leases/:id */
 export async function remove(req: Request, res: Response, next: NextFunction) {
   try {

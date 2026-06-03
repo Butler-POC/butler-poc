@@ -9,6 +9,8 @@ import chatRouter from './routes/chat';
 import vendorsRouter from './routes/vendors';
 import issuesRouter from './routes/issues';
 import vacanciesRouter from './routes/vacancies';
+import digestRouter from './routes/digest';
+import tenantDigestRouter from './routes/tenantDigest';
 import { notFound, errorHandler } from './middleware/error';
 import { UPLOAD_ROOT } from './lib/paths';
 
@@ -33,6 +35,12 @@ export function createApp() {
 
   // L-01 내 건물 등록 (임대인 전용)
   app.use('/api/buildings', buildingsRouter);
+
+  // 임대인 메인화면 — 오늘의 전달사항(digest)
+  app.use('/api/landlord', digestRouter);
+
+  // 임차인 메인화면 — 오늘의 전달사항(digest)
+  app.use('/api/tenant', tenantDigestRouter);
 
   // T-01 임차 건물 등록 (임차인 전용)
   app.use('/api/leases', leasesRouter);

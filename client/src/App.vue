@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue';
 import PhoneFrame from '@/components/layout/PhoneFrame.vue';
 import TopBar from '@/components/layout/TopBar.vue';
+import NavDrawer from '@/components/layout/NavDrawer.vue';
 import ButlerSplash from '@/components/layout/ButlerSplash.vue';
 import { useAuthStore } from '@/stores/auth';
 
@@ -22,6 +23,7 @@ onMounted(async () => {
     <main class="content">
       <RouterView />
     </main>
+    <NavDrawer />
   </PhoneFrame>
 
   <Transition name="splash-fade">

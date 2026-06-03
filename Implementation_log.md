@@ -16,7 +16,13 @@
 
 ## 📍 다음 작업
 
-**jg ↔ jh 통합(머지) 마무리** — 14개 기능 모두 구현됨. main에서 통합 중(라우트·소켓·공실 모델 배선 + 빌드 검증).
+**역할별 앱 UX 고도화 — 3개 역할 메인화면·드로어 통일 완료.** 14개 기능 구현·통합은 완료(아래 표).
+- ✅ 좌측 기능 드로어(햄버거, 전 역할 공통) + 기능코드 비노출
+- ✅ 임대인 메인화면(오늘의 전달사항) + 월세 연체자 종합 조회 + 건물 상세 페이지
+- ✅ 임차인 메인화면(전달사항) + Lease 납부상태(납부 처리/취소)
+- ✅ 중개업자 메인화면 = 공실 조회
+- ✅ 삭제 UX 통일(카드 하단 버튼 + 확인 팝업 ConfirmDialog)
+- ⬜ (선택) Android 패키징 실기 검증 — Capacitor 설정·빌드는 준비됨(에뮬레이터 10.0.2.2 기준)
 
 ---
 
@@ -84,6 +90,17 @@
 
 > 작업할 때마다 최신 항목을 맨 위에 추가. 형식: `YYYY-MM-DD · 코드 기능명 · 상태 · 작업자 · 메모`
 
+- 2026-06-03 · Android(Capacitor) 빌드 설정 · ✅ · StabAn-NRH · 네이티브 실행 준비. `.env.production`(VITE_API_BASE=http://10.0.2.2:3000/api), capacitor.config server `{androidScheme:'http', cleartext:true}`. build+`cap sync android` 완료. Kakao 지도는 origin 불일치로 네이티브 제한(키 도메인 등록 필요).
+- 2026-06-03 · 버그수정 · 임차 건물 삭제 시 하자 제보 잔존 · ✅ · StabAn-NRH · Issue는 Lease와 FK cascade 없이 leaseId 스칼라 연결 + 이력은 tenantId 조회라 Lease 삭제해도 남음. deleteLease에서 leaseId·tenantId 일치 Issue를 트랜잭션으로 함께 삭제.
+- 2026-06-03 · 중개업자 메인화면 = 공실 조회 · ✅ · StabAn-NRH · AgentHome을 공실 조회(A-01)로 전환(모집중 필터·임대인 연결 A-02 진입). 중복된 VacancyList.vue/`/app/agent/vacancies` 라우트 제거, 드로어 A-01→/app/agent.
+- 2026-06-03 · 임차인 메인화면(전달사항) + 월세 납부상태 · ✅ · StabAn-NRH · TenantHome 전달사항 3종(연체>오늘납부>계약만료 6~1개월 2단계: 통지기간/묵시갱신임박) 우선순위 정렬+삭제(임대인과 동일 규칙). Lease.lastPaidMonth 추가(db push), LeasesView 납부 처리/취소 토글, `/api/tenant/digest`. 계산로직 단위검증 13/13. 기능코드 제거.
+- 2026-06-03 · 월세 연체자 종합 조회 · ✅ · StabAn-NRH · 드로어 "현재 월세 연체자"→ 전 건물 OVERDUE 임차인 카드 종합(연체개월·연체액·최종납부월), 카드→임차인 관리 진입. `/api/landlord/overdue-tenants`(listOverdueTenants).
+- 2026-06-03 · 건물 상세 페이지 + 삭제 UX 통일 · ✅ · StabAn-NRH · BuildingDetailView 신설(건축물대장 정리 표시, 건축물대장 등록/수정·삭제 이동). 건물 카드 클릭→상세, ✕ 즉시삭제 제거. 공용 ConfirmDialog로 삭제 재확인 팝업 통일(건물·임차인·공실·임차건물 카드 하단 삭제 버튼).
+- 2026-06-03 · 공실 등록 독립 페이지화 · ✅ · StabAn-NRH · 건물 종속 제거 → 드로어 "공실 등록"에서 단독 진입 후 건물 선택해 등록(BuildingVacanciesView 재작성, `/app/landlord/vacancies`). 건물 카드의 공실 링크 제거.
+- 2026-06-03 · 임대인 화면 UX 정리 · ✅ · StabAn-NRH · 화면 기능코드 전면 제거, 드로어에서 공통기능(C-01·02) 네비게이션 숨김(구현 보존)·로그아웃은 드로어로 일원화·"임대인 기능" 타이틀 제거. 임차인 버튼 색/형태(구분선) 조정.
+- 2026-06-03 · L-06 간단 법률 상담 (연체 맥락 수정) · ✅ · StabAn-NRH · 법률 상담 컨텍스트의 연체 주입 결함 수정. 기존 `t.overdue`(미존재 필드)로 항상 false → `rentState()` 계산값으로 교체(chat.controller buildOwnerLegalContext). legal.prompt에 overdueMonths 추가, "※ 월세 연체 N개월 상태" 표출. 프롬프트 무결성 검증 11/11 통과.
+- 2026-06-03 · 임대인 메인화면(오늘의 전달사항) + 기능 드로어 · ✅ · StabAn-NRH · 좌상단 햄버거→좌측 드로어(기능 접근). 메인화면 헤드라인+전달사항 4종(월세납부일/만료임박/연체/공실미처리) 우선순위 정렬. 삭제 영속(연체는 당일한정), 묵시적갱신 플래그(Tenant.renewedImplicitly), 공실로 등록 연동. 신규: DigestDismissal 모델, /api/landlord/digest. 계산로직 단위검증 15/15.
+- 2026-06-03 · 통합(머지) · ✅ · StabAn-NRH · 빌드 검증 완료. 신규 PC에서 의존성 미설치(@anthropic-ai/sdk·socket.io·socket.io-client)와 Issue 모델 추가 후 prisma client stale 확인 → server/client `npm install` + `prisma generate` 후 server(tsc)·client(vue-tsc+vite) 빌드 모두 통과. jg=main 동일.
 - 2026-06-02 · 통합(머지) · 🔨 · jh · main에서 jg↔jh 머지. 충돌 4건 해결(schema=jg+Issue추가, llm.service=jg / chat()→chat.service 분리, vacancies.ts=jg, log 통합). 라우트·소켓·공실 모델 배선 + 빌드 검증 진행
 - 2026-06-01 · C-02 챗봇 · ✅ · jh · llm.service(Anthropic SDK, claude-opus-4-8, API 실호출 확인) + routes/chat 디스패처 + IssueChat/api·chatbot 스토어. L-06/T-02/T-03 실배선
 - 2026-06-01 · L-05 수선 업체 조회 · ✅ · jh · kakao.service 키워드검색(REST키 실동작 확인) + vendors 라우트 + useKakaoMap/VendorMap 지도
