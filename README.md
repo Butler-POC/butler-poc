@@ -77,22 +77,3 @@ cd client/android
 > - 백엔드가 `http://`(비암호화)면 안드로이드의 cleartext 허용 설정이 필요할 수 있습니다.
 >   운영 배포 시에는 `https://` 백엔드를 권장합니다.
 > - **iOS(.ipa)** 빌드는 macOS + Xcode 환경에서 `npx cap add ios` 후 진행합니다. (현재 Windows에서는 불가)
-
----
-
-## 5. 환경 변수
-
-### `server/.env`
-
-| 키 | 설명 |
-|---|---|
-| `API_KEY` | Claude(Anthropic) API 키 (OCR 비전·챗봇용) |
-| `DB_HOST` / `DB_USERNAME` / `DB_PASSWORD` / `DB_DATABASE` | MySQL 접속 정보 |
-| `LLM_MODEL` | (선택) 사용할 모델. 기본 `claude-sonnet-4-6` |
-| `PORT` | (선택) 서버 포트. 기본 `3000` |
-
-### `client/.env` (네이티브 빌드 시)
-
-| 키 | 설명 |
-|---|---|
-| `VITE_API_BASE` | 백엔드 절대주소. 미지정 시 `/api` (웹 개발용 프록시) |
